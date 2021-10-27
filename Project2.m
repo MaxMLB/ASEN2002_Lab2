@@ -3,6 +3,8 @@ clear;
 close all;
 clc;
 data = readtable("ASEN 2002_1230_1_WTData.csv.xlsx");
+%waterData = readmatrix("Wind Tunnel Lab Data.csv");
+VenturiData = [0.1;0.5;1.4;3;5];
 
 R_air = 287;
 
@@ -27,6 +29,13 @@ T_avg = averageData(:,1);
 P_avg = averageData(:,2);
 
 V_volt = sqrt(2*delta_p.*(R_air.*T_avg./P_avg));
+Voltage = averageData(:,13);
+
+figure()
+hold on
+plot(Voltage,V_volt);
+plot(Voltage,averageData(:,4));
+
 
 
 
