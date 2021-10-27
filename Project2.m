@@ -10,7 +10,7 @@ R_air = 287;
 
 voltage = data.AppliedVoltage_V_;
 
-ChangeIndexes = [0;find(diff(voltage) >.1);100];
+ChangeIndexes = [0;find(diff(voltage) >.1);length(voltage)];
 
 
 averageData = zeros(5,13);
@@ -21,20 +21,28 @@ for i = 1:length(ChangeIndexes)-1
     averageData(i,:) = mean(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
     %stdData(i,:) = std(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
 end
-delta_p = mean([averageData(:,5)';averageData(:,6)'])';
-%delta_pStd = std([averageData(:,5)';averageData(:,6)'])';
+p_1 = averageData(:,5);
+p_2 = averageData(:,6);
+
 
 
 T_avg = averageData(:,1);
 P_avg = averageData(:,2);
 
-V_volt = sqrt(2*delta_p.*(R_air.*T_avg./P_avg));
+V_volt = sqrt(2*p_1.*(R_air.*T_avg./P_avg));
+V2_volt = sqrt((2.*p_2*R_air.*T_avg)./(P_avg.*(1-(1/9.5)^2)));
+
+%V_volt_Avg = mean([V_volt';V2_volt']);
+
 Voltage = averageData(:,13);
 
 figure()
 hold on
 plot(Voltage,V_volt);
-plot(Voltage,averageData(:,4));
+plot(Voltage,V2_volt);
+%plot(Voltage,V_volt_Avg)
+
+
 
 
 
