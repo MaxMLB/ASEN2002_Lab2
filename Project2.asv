@@ -58,6 +58,7 @@ plot(Voltage1,v2_volt);
 hold off
 
 %% Read in the Manometer readings
+clear; clc;
 mano_data = readtable('Water manometer readings.csv');
 mano_data_vent = [];
 mano_data_pitot = [];
@@ -67,7 +68,7 @@ for i = 1:30
     if string(mano_data{i,3}) == 'Venturi tube'
         
         mano_data_vent(i,1:10) = [mano_data{i,4:13}];
-        mano_data_vent(~any(mano_data_vent,2), :) = [];
+        mano_data_vent( ~any(mano_data_vent,2), : ) = [];
         
     elseif string(mano_data{i,3}) == 'Pitot Static Probe'
         
@@ -90,27 +91,11 @@ mano_data_vent = [mano_data_vent(:,1:2); mano_data_vent(:,3:4); mano_data_vent(:
 p_diff_mano_pitot = [mano_data_pitot(:,1), mano_data_pitot(:,2) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
 p_diff_mano_vent = [mano_data_vent(:,1), mano_data_vent(:,2) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
 
-% each of the above matrices has the voltage in column 1 and the resultant
-% differential pressure in the 2nd column
-
-% Test Plots
-%{
-subplot(2,1,1);
 hold on;
-plot(p_diff_mano_pitot(:,1),p_diff_mano_pitot(:,2),'o')
+plot(p_diff_mano_pitot(:,1),p_diff_mano_pitot(:,2),'o-')
 title('Water Manometer - Pitot Tube')
 xlabel('Voltage')
-ylabel('Pressure Diff [Pa]')
-hold off;
-
-subplot(2,1,2);
-hold on;
-plot(p_diff_mano_vent(:,1),p_diff_mano_vent(:,2),'o')
-title('Water Manometer - Venturi Tube')
-xlabel('Voltage')
-ylabel('Pressure Diff [Pa]')
-hold off;
-%}
+ylabel('Pressure Diff [Pa]
 
 %% Computing the values for each data set and graphing it.
 
