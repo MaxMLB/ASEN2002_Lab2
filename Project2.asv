@@ -94,14 +94,13 @@ sigmaT = 0.25;
 
 %finding the uncertainty of each value
 
-WPito  = zeros(100,1);
-x = 1;
+WPito  = zeros()
+
 for i = 1:20
     for j = 1:5
-        uncertainty = GUPito(AverageData(j,5,i),AverageData(j,1,i),AverageData(j,2,i));
-        WPito(x) = uncertainty;
-        x = x+1;
+        uncertainty = GUPito(AverageData(j,5,i),AverageData(j,1,i),AverageData(j,2,i))
     end
+
 end
 
 
@@ -150,7 +149,7 @@ function result = GUPito(Delta_P,T,P)
     Sigma_diffP = 0.01* 6.89476 * 10^3;
     sigmaAbsP = (250-20)*10^3*0.015;
     sigmaT = 0.25;
-    R = 0.287;
+    R = 287;
     d_deltaP = (2 .* R .* T./P) .* (Delta_P.*R.*T./P).^(-1/2);
     d_T = (2.*Delta_P.*R./P) .* (Delta_P.*R.*T./P).^(-1/2);
     d_P = (-2*Delta_P.^2.*R^2.*T.^2)/(P.^3);
