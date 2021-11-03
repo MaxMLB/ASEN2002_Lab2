@@ -57,6 +57,45 @@ plot(Voltage1,v_volt);
 plot(Voltage1,v2_volt);
 hold off
 
+%% Read in the Manometer readings
+clear; clc;
+mano_data = readtable('Water manometer readings.csv');
+mano_data_vent = [];
+mano_data_pitot = [];
+
+for i = 1:30
+   
+    if string(mano_data{i,3}) == 'Venturi tube'
+        
+        mano_data_vent(i,1:10) = [mano_data{i,4:13}];
+        mano_data_vent( ~any(mano_data_vent,2), : ) = [];
+        
+    elseif string(mano_data{i,3}) == 'Pitot Static Probe'
+        
+        mano_data_pitot(i,1:10) = [mano_data{i,4:13}];
+        mano_data_pitot(~any(mano_data_pitot,2), :) = [];
+        
+    end
+    
+end
+
+% get data into voltage in column 1 and height diff in column 2
+% more efficient way to do this but im lazy
+mano_data_pitot = [mano_data_pitot(:,1:2); mano_data_pitot(:,3:4); mano_data_pitot(:,5:6); mano_data_pitot(:,7:8); mano_data_pitot(:,9:10);];
+mano_data_vent = [mano_data_vent(:,1:2); mano_data_vent(:,3:4); mano_data_vent(:,5:6); mano_data_vent(:,7:8); mano_data_vent(:,9:10);];
+
+% calculate differential pressure
+% Calculate pressure differential given from manometer
+% in. H20 * spec. weight of water [slug/ft^3] * 1/12 [ft] * 32.2 [lb/slug]
+% * 47.88 Pa/psf
+p_diff_mano_pitot = [mano_data_pitot(:,1), mano_data_pitot(:,2) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
+p_diff_mano_vent = [mano_data_vent(:,1), mano_data_vent(:,2) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
+
+hold on;
+plot(p_diff_mano_pitot(:,1),p_diff_mano_pitot(:,2),'o-')
+title('Water Manometer - Pitot Tube')
+xlabel('Voltage')
+ylabel('Pressure Diff [Pa]
 
 %% Computing the values for each data set and graphing it.
 
@@ -156,4 +195,18 @@ function result = GUPito(Delta_P,T,P)
 
     result = sqrt((d_deltaP*Sigma_diffP)^2+(d_P*sigmaAbsP)^2+(d_T*sigmaT)^2);
 end
+
+V_volt = sqrt(2*P_1.*(R_air.*T_avg./P_avg));
+V2_volt = sqrt((2.*P_2*R_air.*T_avg)./(P_avg.*(1-(1/9.5)^2)));
+
+figure()
+plot(plotVoltage,V_volt)
+title("Pitostaic Velocity")
+
+figure()
+plot(plotVoltage,V2_volt)
+title("Venturi Velocity")
+
+toc
+
 
