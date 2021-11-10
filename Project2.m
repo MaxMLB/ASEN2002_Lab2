@@ -57,11 +57,44 @@ plot(Voltage1,v_volt);
 plot(Voltage1,v2_volt);
 hold off
 
+
+
+%% Computing the values for each data set and graphing it.
+
+idxVoltage = zeros(20,1);
+Voltage = zeros(100,20);
+for i = 1:20
+    idxVoltage(i) = find(sum(~isnan(Data(:,:,i)),1) > 0, 1 , 'last');
+    Voltage(:,i) = Data(:,idxVoltage(i),i);
+end
+ChangeIndexes = [0;find(diff(Voltage(:,i)) >.1);length(Voltage(:,i))];
+
+AverageData = zeros(length(ChangeIndexes)-1,29,20);
+
+plotVoltage = zeros(5,20);
+for i = 1:20
+    for j = 1:length(ChangeIndexes)-1
+        AverageData(j,:,i) = mean(Data(ChangeIndexes(j)+1:ChangeIndexes(j+1),1:29,i));
+        %stdData(i,:) = std(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
+    end
+    plotVoltage(:,i) = AverageData(:,idxVoltage(i),i);
+end
+P_1 = permute(AverageData(:,5,:),[1,3,2]);
+P_2 = permute(AverageData(:,6,:),[1,3,2]);
+T_avg = permute(AverageData(:,1,:),[1,3,2]);
+P_avg = permute(AverageData(:,2,:),[1,3,2]);
+
+
+V_volt = sqrt(2*P_1.*(R_air.*T_avg./P_avg));
+V2_volt = sqrt((2.*P_2*R_air.*T_avg)./(P_avg.*(1-(1/9.5)^2)));
+
 %% Read in the Manometer readings
+% I moved this down to access the temperature and pressure vals
 mano_data = readtable('Water manometer readings.csv');
 mano_data_vent = [];
 mano_data_pitot = [];
 
+%formatting and adjusting the csv file matrix
 for i = 1:30
    
     if string(mano_data{i,3}) == 'Venturi tube'
@@ -93,53 +126,32 @@ p_diff_mano_vent = [mano_data_vent(:,1), mano_data_vent(:,2) * 1.940 * (1/12) * 
 % each of the above matrices has the voltage in column 1 and the resultant
 % differential pressure in the 2nd column
 
-% Test Plots
 %{
+% Test values
+T_avg = 300;
+R_air = 287;
+P_avg = 101325;
+%}
+
+v_mano_pitot = [mano_data_pitot(:,1), sqrt(2 * p_diff_mano_pitot(:,2) .* (R_air.*T_avg./P_avg))];
+v_mano_vent = [mano_data_vent(:,1), sqrt((2 .* p_diff_mano_vent(:,2) * R_air .* T_avg)./(P_avg.*(1-(1/9.5)^2)))];
+
 subplot(2,1,1);
 hold on;
-plot(p_diff_mano_pitot(:,1),p_diff_mano_pitot(:,2),'o')
+plot(p_diff_mano_pitot(:,1),v_mano_pitot(:,2),'o')
 title('Water Manometer - Pitot Tube')
 xlabel('Voltage')
-ylabel('Pressure Diff [Pa]')
+ylabel('Velocity [m/s]')
 hold off;
 
 subplot(2,1,2);
 hold on;
-plot(p_diff_mano_vent(:,1),p_diff_mano_vent(:,2),'o')
+plot(p_diff_mano_vent(:,1),v_mano_vent(:,2),'o')
 title('Water Manometer - Venturi Tube')
 xlabel('Voltage')
-ylabel('Pressure Diff [Pa]')
+ylabel('Velocity [m/s]')
 hold off;
-%}
 
-%% Computing the values for each data set and graphing it.
-
-idxVoltage = zeros(20,1);
-Voltage = zeros(100,20);
-for i = 1:20
-    idxVoltage(i) = find(sum(~isnan(Data(:,:,i)),1) > 0, 1 , 'last');
-    Voltage(:,i) = Data(:,idxVoltage(i),i);
-end
-ChangeIndexes = [0;find(diff(Voltage(:,i)) >.1);length(Voltage(:,i))];
-
-AverageData = zeros(length(ChangeIndexes)-1,29,20);
-
-plotVoltage = zeros(5,20);
-for i = 1:20
-    for j = 1:length(ChangeIndexes)-1
-        AverageData(j,:,i) = mean(Data(ChangeIndexes(j)+1:ChangeIndexes(j+1),1:29,i));
-        %stdData(i,:) = std(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
-    end
-    plotVoltage(:,i) = AverageData(:,idxVoltage(i),i);
-end
-P_1 = permute(AverageData(:,5,:),[1,3,2]);
-P_2 = permute(AverageData(:,6,:),[1,3,2]);
-T_avg = permute(AverageData(:,1,:),[1,3,2]);
-P_avg = permute(AverageData(:,2,:),[1,3,2]);
-
-
-V_volt = sqrt(2*P_1.*(R_air.*T_avg./P_avg));
-V2_volt = sqrt((2.*P_2*R_air.*T_avg)./(P_avg.*(1-(1/9.5)^2)));
 
 %% finding least squares and associated error
 Sigma_diffP = 0.01* 6.89476 * 10^3;
