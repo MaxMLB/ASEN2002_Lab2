@@ -9,7 +9,7 @@ VenturiData = [0.1;0.5;1.4;3;5];
 
 %% Reading in all the data
 blfiles = dir('Exp 1 (voltage to speed) data files');
-blfiles = blfiles(4:end);
+blfiles = blfiles(3:end);
 names = cell(20,1); %to hold the names of each file
 
 Data = zeros(100,30,20); %Initialize matrix to store all of the new data
@@ -116,29 +116,41 @@ end
 mano_data_pitot = [mano_data_pitot(:,1:2); mano_data_pitot(:,3:4); mano_data_pitot(:,5:6); mano_data_pitot(:,7:8); mano_data_pitot(:,9:10);];
 mano_data_vent = [mano_data_vent(:,1:2); mano_data_vent(:,3:4); mano_data_vent(:,5:6); mano_data_vent(:,7:8); mano_data_vent(:,9:10);];
 
+mano_data_pitot = sort(mano_data_pitot);
+mano_data_vent = sort(mano_data_vent);
+
+% calculate average values at each voltage point
+voltageVals = 0.5:0.5:10;
+avg_Mano_Pitot = [voltageVals; zeros(1,20)];
+avg_Mano_Vent = [voltageVals; zeros(1,20)];
+
+for i = 1:length(voltageVals)
+    
+    idx1 = mano_data_pitot == voltageVals(i);
+    idx2 = mano_data_vent == voltageVals(i);
+    avg_Mano_Pitot(2,i) = mean(mano_data_pitot(idx1(:,1),2));
+    avg_Mano_Vent(2,i) = mean(mano_data_vent(idx2(:,1),2));
+    
+    
+end
+
 % calculate differential pressure
 % Calculate pressure differential given from manometer
 % in. H20 * spec. weight of water [slug/ft^3] * 1/12 [ft] * 32.2 [lb/slug]
 % * 47.88 Pa/psf
-p_diff_mano_pitot = [mano_data_pitot(:,1), mano_data_pitot(:,2) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
-p_diff_mano_vent = [mano_data_vent(:,1), mano_data_vent(:,2) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
+p_diff_mano_pitot = [avg_Mano_Pitot(1,:); avg_Mano_Pitot(2,:) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
+p_diff_mano_vent = [avg_Mano_Vent(1,:); avg_Mano_Vent(2,:) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
 
 % each of the above matrices has the voltage in column 1 and the resultant
 % differential pressure in the 2nd column
 
-%{
-% Test values
-T_avg = 300;
-R_air = 287;
-P_avg = 101325;
-%}
+v_mano_pitot = sqrt(2 .* p_diff_mano_pitot(2,:) .* (R_air.*T_avg./P_avg));
+v_mano_vent = sqrt((2 .* p_diff_mano_vent(2,:) * R_air .* T_avg)./(P_avg.*(1-(1/9.5)^2)));
 
-v_mano_pitot = [mano_data_pitot(:,1), sqrt(2 * p_diff_mano_pitot(:,2) .* (R_air.*T_avg./P_avg))];
-v_mano_vent = [mano_data_vent(:,1), sqrt((2 .* p_diff_mano_vent(:,2) * R_air .* T_avg)./(P_avg.*(1-(1/9.5)^2)))];
-
+figure();
 subplot(2,1,1);
 hold on;
-plot(p_diff_mano_pitot(:,1),v_mano_pitot(:,2),'o')
+plot(p_diff_mano_pitot(1,:),v_mano_pitot,'o')
 title('Water Manometer - Pitot Tube')
 xlabel('Voltage')
 ylabel('Velocity [m/s]')
@@ -146,7 +158,7 @@ hold off;
 
 subplot(2,1,2);
 hold on;
-plot(p_diff_mano_vent(:,1),v_mano_vent(:,2),'o')
+plot(p_diff_mano_vent(1,:),v_mano_vent,'o')
 title('Water Manometer - Venturi Tube')
 xlabel('Voltage')
 ylabel('Velocity [m/s]')
@@ -223,4 +235,3 @@ function result = GUPito(Delta_P,T,P)
 
     result = sqrt((d_deltaP*Sigma_diffP)^2+(d_P*sigmaAbsP)^2+(d_T*sigmaT)^2);
 end
-
