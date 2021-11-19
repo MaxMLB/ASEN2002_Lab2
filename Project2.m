@@ -3,7 +3,7 @@ tic
 clear;
 close all;
 clc;
-data = readtable("ASEN 2002_1230_1_WTData.csv.xlsx");
+%data = readtable("ASEN 2002_1230_1_WTData.csv.xlsx");
 %waterData = readmatrix("Wind Tunnel Lab Data.csv");
 VenturiData = [0.1;0.5;1.4;3;5];
 
@@ -20,59 +20,65 @@ for i= 1:20
 end
 
 %load in the data file names
+
 for i = 1:11
     blfiles2{i} = dir(['Aero Lab Windtunnel Calibration/Aero Lab 1 - 2019 Group Data/BoundaryLayerData/Port ',num2str(i),'/*.csv']);
     %access this by blfiles{1}(1).name for port 1 first file
 end
 
+num_elements = zeros(11,1);
 for j =1:11
     x=blfiles2{j};
     num_elements(j) = sum(arrayfun(@(x) ~isempty(x.name),x)); %number of datafiles for each port
 end
 
-
 clear i j
 
+blfiles3 = dir('Exp 2 (airfoil) data files');
+blfiles3 = blfiles3(3:end);
+names3 = cell(25,1); %to hold the names of each file
 
-
+Data3 = zeros(240,30,25); %Initialize matrix to store all of the new data
+blfiles3(1) = [];
+for i= 1:25
+    names3{i} = strcat('Exp 2 (airfoil) data files/',blfiles3(i).name);
+    Data3(:,:,i) = readmatrix(names3{i});
+end
 
 R_air = 287;
 
-voltage = data.AppliedVoltage_V_;
+%% Computing for a single Data file
+%voltage = data.AppliedVoltage_V_;
 
-ChangeIndexes = [0;find(diff(voltage) >.1);length(voltage)];
+%ChangeIndexes = [0;find(diff(voltage) >.1);length(voltage)];
 
 
-averageData = zeros(5,13);
+%averageData = zeros(5,13);
 %stdData = zeros(5,13);
 
 
-for i = 1:length(ChangeIndexes)-1
-    averageData(i,:) = mean(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
+%for i = 1:length(ChangeIndexes)-1
+    %averageData(i,:) = mean(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
     %stdData(i,:) = std(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
-end
-p_1 = averageData(:,5);
-p_2 = averageData(:,6);
+%end
+%p_1 = averageData(:,5);
+%p_2 = averageData(:,6);
 
+%t_avg = averageData(:,1);
+%p_avg = averageData(:,2);
 
-
-t_avg = averageData(:,1);
-p_avg = averageData(:,2);
-
-v_volt = sqrt(2*p_1.*(R_air.*t_avg./p_avg));
-v2_volt = sqrt((2.*p_2*R_air.*t_avg)./(p_avg.*(1-(1/9.5)^2)));
+%v_volt = sqrt(2*p_1.*(R_air.*t_avg./p_avg));
+%v2_volt = sqrt((2.*p_2*R_air.*t_avg)./(p_avg.*(1-(1/9.5)^2)));
 
 %V_volt_Avg = mean([V_volt';V2_volt']);
 
-Voltage1 = averageData(:,13);
+%Voltage1 = averageData(:,13);
 
-figure()
-hold on
-plot(Voltage1,v_volt);
-plot(Voltage1,v2_volt);
-hold off
-
-
+%figure()
+%hold on
+%plot(Voltage1,v_volt);
+%plot(Voltage1,v2_volt);
+%hold off
 
 %% Computing the values for each data set and graphing it.
 
@@ -226,8 +232,9 @@ hold off
 %% Finding the Boundary Layer Thickness
 
 for i = 1:11 %port incrementer
+    
     for j = 1:num_elements(i) %number of files in a port incrementer
-
+        
         data = load([blfiles2{i}(j).folder,'/',blfiles2{i}(j).name]);
         %need to group based on data(:,6)
         y = data(:,6);
@@ -296,6 +303,64 @@ ylabel('Boundary Layer thickness [mm]')
 legend('Data','Laminar Theory','Turbulent Theory')
 
 toc
+
+%% Finding Pressure at trailing edge
+angleOfAttack = zeros(4,25);
+Pressure = zeros(4,30,25);
+
+for i = 1:25
+    for j = 1:4
+        Beginidx = (j-1)*60+1;
+        EndIdx = j*60;
+        Pressure(j,:,i) = mean(Data3(Beginidx:EndIdx,:,i));
+        angleOfAttack(j,i) = Pressure(j,7,i);
+    end
+end
+Pressure(:,30,:) = [];
+
+Indexes = zeros(25,8);
+
+Indexes(:,1) = angleOfAttack(1,:) == -10;
+Indexes(:,2) = angleOfAttack(1,:) == -15;
+Indexes(:,3) = angleOfAttack(1,:) == -8;
+Indexes(:,4) = angleOfAttack(1,:) == -9;
+Indexes(:,5) = angleOfAttack(1,:) == -11;
+Indexes(:,6) = angleOfAttack(1,:) == -12;
+Indexes(:,7) = angleOfAttack(1,:) == -13;
+Indexes(:,8) = angleOfAttack(1,:) == -14;
+Indexes = logical(Indexes);
+AnglesOfAttack = reshape(angleOfAttack(1:32),[],1);
+PortPoints = zeros(32,17);
+PortPoints(:,1) = AnglesOfAttack;
+
+%Looping through to find a single value for the pressure ports for each
+%angle of attack
+for i = 1:8
+    PortData = Pressure(:,14:29,Indexes(:,i));
+    PortDataMean = mean(PortData,3);
+    PortPoints((i-1)*4+1:i*4,2:end) = PortDataMean;
+end
+clear PortData PortDataMean
+PortPoints = sortrows(PortPoints);
+% Finding the pressure at the trailing edge from the high and low pressure
+% values
+P11 = zeros(32,2);
+P11(:,1) = PortPoints(:,1);
+
+for i = 1:32
+    PHigh = (PortPoints(i,10)-PortPoints(i,9)) + PortPoints(i,10); %Linearly interpolates for the pressure ports on top of the wing
+    PLow = (PortPoints(i,11)-PortPoints(i,12)) + PortPoints(i,11); %Linearly interpolates for the pressure ports on bottom of the wing
+    P11(i,2) = mean([PLow,PHigh]); %Finds the average between the 2 linear interpolations and stores it to p11
+end
+clear PHigh PLow
+figure()
+plot(P11(:,1),P11(:,2),".-")
+xlabel("Angle of Attack")
+ylabel("Pressure at trailing edge")
+
+%% Calculating Coefficient of Pressure at each point for each angle of attack
+
+
 
 %% Functions
 
