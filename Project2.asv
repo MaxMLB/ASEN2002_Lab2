@@ -363,8 +363,7 @@ ylabel("Pressure at trailing edge")
 % calculated pressure P_avg being the freestream pressure and each value
 % measured at the ports as p
 % Cp = (p-p_free) / (1/2 rho_free v_free^2)
-rho_free = P_avg ./ (R_air * T_avg);
-pressureCoeff = (Pressure(1,1:5,1:20) - P_avg) ./ (0.5 .* rho_free .* V2_volt);
+
 
 
 %% Functions
