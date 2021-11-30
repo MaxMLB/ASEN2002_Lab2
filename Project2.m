@@ -35,7 +35,7 @@ end
 clear i j
 
 blfiles3 = dir('Exp 2 (airfoil) data files');
-blfiles3 = blfiles3(2:end);
+blfiles3 = blfiles3(3:end);
 names3 = cell(25,1); %to hold the names of each file
 
 Data3 = zeros(240,30,25); %Initialize matrix to store all of the new data
@@ -363,8 +363,77 @@ ylabel("Pressure at trailing edge")
 % calculated pressure P_avg being the freestream pressure and each value
 % measured at the ports as p
 % Cp = (p-p_free) / (1/2 rho_free v_free^2)
-rho_free = P_avg ./ (R_air * T_avg);
-pressureCoeff = (Pressure(1,1:5,1:20) - P_avg) ./ (0.5 .* rho_free .* V2_volt);
+P_atm  = mean(Pressure(:,2,:),"all"); %Finds the average freestream pressure
+T_atm = mean(Pressure(:,1,:),"all"); %Finds the average freestream temperature
+V_freeAvg = mean(Pressure(:,4,:),"all"); %Finds the average freestream velocity
+
+rho_free = P_atm ./ (R_air * T_atm); %Calculates freestream density
+
+
+V_var = (10:1:40)';
+PortPressure = [PortPoints(:,1:10), P11(:,2), PortPoints(:,11:end)]; %Creates array holding the pressure at each port for each angle of attack
+
+C_p = zeros(32,18,length(V_var));
+C_p(:,1) = PortPressure(:,1,:);
+for k = 1:length(V_var)
+    Q_free = 0.5*rho_free*V_var(k)^2; %Calculates freestream dynamic pressure Pa
+    for i = 1:32
+        for j = 2:18
+            C_p(i,j,k) = (PortPressure(i,j))/Q_free;
+        end
+    end
+end
+
+
+%% Plotting the coefficient of pressure vs normalized chord length
+xDist = [0;0.175;0.35;0.7;1.05;1.4;1.75;2.1;2.8;3.5;2.8;2.1;1.4;1.05;0.7;0.35;0.175;0]/3.5;
+
+figure()
+C_pGraph = [C_p(18,2:18,:),C_p(18,2,:)];
+C_pGraph = permute(C_pGraph,[2,3,1]);
+C_pGraph2 = flip(C_pGraph(10:18,:),1);
+C_pGraphPort15 = mean(C_pGraph2(6:7,:));
+C_pGraph2 = [C_pGraph2(1:6,:);C_pGraphPort15;C_pGraph2(7:end,:)];
+
+surf(C_pGraph(1:10,:),'FaceLighting','gouraud',...
+    'MeshStyle','column',...
+    'SpecularColorReflectance',0,...
+    'SpecularExponent',5,...
+    'SpecularStrength',0.2,...
+    'DiffuseStrength',1,...
+    'AmbientStrength',0.4,...
+    'AlignVertexCenters','on',...
+    'LineWidth',0.2,...
+    'FaceAlpha',0.2,...
+    'FaceColor',[0.07 0.6 1],...
+    'EdgeAlpha',0.2)
+hold on
+surf(C_pGraph2,'SpecularExponent',1,...
+    'SpecularStrength',1,...
+    'DiffuseStrength',1,...
+    'AmbientStrength',0.4,...
+    'FaceColor',[0.5 0.5 .5],...
+    'AlignVertexCenters','on',...
+    'LineWidth',0.2,...
+    'EdgeAlpha',1)
+yticks((1:10))
+yticklabels(xDist(1:10))
+ylabel("Normalized Chord Length")
+xticks(1:51)
+xticklabels(V_var)
+xlabel("Velocity(m/s)")
+zlabel("Pressure Coefficient")
+ax = gca;
+ax.ZDir = 'reverse';
+hold off
+
+
+
+
+
+
+
+
 
 
 %% Functions
