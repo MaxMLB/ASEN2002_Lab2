@@ -33,6 +33,7 @@ end
 clear i j
 
 blfiles3 = dir('Exp 2 (airfoil) data files');
+
 blfiles3 = blfiles3(2:end);
 names3 = cell(25,1); %to hold the names of each file
 
@@ -127,20 +128,17 @@ end
 
 % calculate differential pressure
 % Calculate pressure differential given from manometer
-% in. H20 * spec. weight of fluid [slug/ft^3] * 1/12 [ft] * 32.2 [lb/slug]
+% in. H20 * spec. weight of water [slug/ft^3] * 1/12 [ft] * 32.2 [lb/slug]
 % * 47.88 Pa/psf
-% error in each reading is +/- 0.1 in.
-p_diff_mano_pitot = [avg_Mano_Pitot(1,:); avg_Mano_Pitot(2,:) * 0.826 * (1/12) * 32.2 * 47.88]; % [Pa]
-p_diff_mano_vent = [avg_Mano_Vent(1,:); avg_Mano_Vent(2,:) * 0.826 * (1/12) * 32.2 * 47.88]; % [Pa]
+p_diff_mano_pitot = [avg_Mano_Pitot(1,:); avg_Mano_Pitot(2,:) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
+p_diff_mano_vent = [avg_Mano_Vent(1,:); avg_Mano_Vent(2,:) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
+
 
 % each of the above matrices has the voltage in column 1 and the resultant
 % differential pressure in the 2nd column
 
 v_mano_pitot = sqrt(2 .* p_diff_mano_pitot(2,:) .* (R_air.*T_avg./P_avg));
 v_mano_vent = sqrt((2 .* p_diff_mano_vent(2,:) * R_air .* T_avg)./(P_avg.*(1-(1/9.5)^2)));
-
-% Finding error propagation
-d_p_diff_pitot = 
 
 figure();
 subplot(2,1,1);
@@ -196,8 +194,31 @@ plot(plotVoltage,V2_volt)
 fplot(ybestVent,[0 10],"k-","LineWidth",2)
 fplot(ybestVent-sigma_yVent,[0 10],"r-","LineWidth",1)
 fplot(ybestVent+sigma_yVent,[0 10],"r-","LineWidth",1)
-title("Venturi Velocity")
+
+title("Venturi Velocity","FontSize",20)
+legend("Best Fit Line","Error Bar","Location","northwest","FontSize",20)
+xlabel("Voltage [V]","FontSize",18)
+ylabel("Velocity [m/s]","FontSize",18)
+ax = gca;
+ax.FontSize = 16;
+ylim([0,60])
 hold off
+
+figure()
+hold on
+fplot(ybestVent,[0 10],"k-","LineWidth",2)
+fplot(ybestVent-sigma_yVent,[0 10],"r-","LineWidth",1)
+fplot(ybestVent+sigma_yVent,[0 10],"r-","LineWidth",1)
+fplot(ybestPito,[0 10],"k-","LineWidth",2)
+fplot(ybestPito-sigma_yPito,[0 10],"r-","LineWidth",1)
+fplot(ybestPito+sigma_yPito,[0 10],"r-","LineWidth",1)
+title("Venturi Velocity","FontSize",20)
+legend("Best Fit Line","Error Bar","Location","northwest","FontSize",20)
+xlabel("Voltage [V]","FontSize",18)
+ylabel("Velocity [m/s]","FontSize",18)
+ax = gca;
+ax.FontSize = 16;
+
 
 %% Finding the Boundary Layer Thickness
 port = struct('meanfreestream',0,'meandensity',0,'blthickness',0,'yloca',zeros(24,1),'speeds',zeros(24,1));
@@ -529,6 +550,21 @@ ax.Interactions = rotateInteraction;
 legend("Low Velocity","Medium Velocity","High Velocity","Location","northwest")
 hold off
 
+
+% Plotting 2d graph of pressure coefficient over the wing for an angle of
+% attack of 3 degrees
+C_pGraph2D = [C_p(55:57,3:19),C_p(55:57,3)]';
+figure()
+plot(xDist,C_pGraph2D,"LineWidth",2)
+ax = gca;
+ax.YDir = 'reverse';
+legend(string(V_free + " m/s"),"Location","northeast","FontSize",20)
+title("Coefficient of Pressure over the wing","FontSize",20)
+xlabel("Normalized chord length","FontSize",18)
+ylabel("Pressure Coefficient","FontSize",18)
+ax = gca;
+ax.FontSize = 16; 
+
 %% Calculating Normal and axial force coefficient
 
 Cn = zeros(96,1); %Initializing vector
@@ -570,27 +606,37 @@ Cd = Cn.*sind(C_p(:,1)) + Ca.*cosd(C_p(:,1)); %Coefficient of drag for each angl
 %Plotting the coefficient of lift for varying velocities and angles of
 %attack
 figure()
-plot(sortrows(AnglesOfAttack),Cl(1:3:end))
+
+plot(sortrows(AnglesOfAttack),Cl(1:3:end),"LineWidth",1.5)
 hold on
-plot(sortrows(AnglesOfAttack),Cl(2:3:end))
-plot(sortrows(AnglesOfAttack),Cl(3:3:end))
-title("Coefficient of Lift for different freestream velocities")
-xlabel("Angle of Attack")
-ylabel("Coefficient of Lift")
-legend("Low Velocity","Medium Velocity","High Velocity")
+plot(sortrows(AnglesOfAttack),Cl(2:3:end),"LineWidth",1.5)
+plot(sortrows(AnglesOfAttack),Cl(3:3:end),"LineWidth",1.5)
+title("Coefficient of Lift for Different Freestream Velocities","FontSize",20)
+xlabel("Angle of Attack [°]","FontSize",18)
+ylabel("Coefficient of Lift","FontSize",18)
+legend(string(V_free + " m/s"),"FontSize",20,"Location","northwest")
+xlim([-15,16])
+ax = gca;
+ax.FontSize = 16; 
+
 hold off
 
 %Plotting the coefficient of drag for varying velocities and angles of
 %attack
 figure()
-plot(sortrows(AnglesOfAttack),Cd(1:3:end))
+
+plot(sortrows(AnglesOfAttack),Cd(1:3:end),"LineWidth",1.5)
 hold on
-plot(sortrows(AnglesOfAttack),Cd(2:3:end))
-plot(sortrows(AnglesOfAttack),Cd(3:3:end))
-title("Coefficient of Drag for different freestream velocities")
-xlabel("Angle of Attack")
-ylabel("Coefficient of Drag")
-legend("Low Velocity","Medium Velocity","High Velocity")
+plot(sortrows(AnglesOfAttack),Cd(2:3:end),"LineWidth",1.5)
+plot(sortrows(AnglesOfAttack),Cd(3:3:end),"LineWidth",1.5)
+title("Coefficient of Drag for Different Freestream Velocities","FontSize",20)
+xlabel("Angle of Attack [°]","FontSize",18)
+ylabel("Coefficient of Drag","FontSize",18)
+legend(string(V_free + " m/s"),"FontSize",20,"Location","northwest")
+xlim([-15,16])
+ax = gca;
+ax.FontSize = 16; 
+
 hold off
 
 

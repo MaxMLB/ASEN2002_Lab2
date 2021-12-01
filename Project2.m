@@ -210,8 +210,29 @@ plot(plotVoltage,V2_volt)
 fplot(ybestVent,[0 10],"k-","LineWidth",2)
 fplot(ybestVent-sigma_yVent,[0 10],"r-","LineWidth",1)
 fplot(ybestVent+sigma_yVent,[0 10],"r-","LineWidth",1)
-title("Venturi Velocity")
+title("Venturi Velocity","FontSize",20)
+legend("Best Fit Line","Error Bar","Location","northwest","FontSize",20)
+xlabel("Voltage [V]","FontSize",18)
+ylabel("Velocity [m/s]","FontSize",18)
+ax = gca;
+ax.FontSize = 16;
+ylim([0,60])
 hold off
+
+figure()
+hold on
+fplot(ybestVent,[0 10],"b-","LineWidth",2)
+fplot(ybestVent-sigma_yVent,[0 10],"r-","LineWidth",1)
+fplot(ybestVent+sigma_yVent,[0 10],"r-","LineWidth",1)
+fplot(ybestPito,[0 10],"g-","LineWidth",2)
+fplot(ybestPito-sigma_yPito,[0 10],"r-","LineWidth",1)
+fplot(ybestPito+sigma_yPito,[0 10],"r-","LineWidth",1)
+title("Different Velocity Measurement Devices","FontSize",20)
+legend("Venturi","Venturi Error Bar","","Pitostatic","Pitostatic Error Bar","Location","northwest","FontSize",20)
+xlabel("Voltage [V]","FontSize",18)
+ylabel("Velocity [m/s]","FontSize",18)
+ax = gca;
+ax.FontSize = 16;
 
 %% Finding the Boundary Layer Thickness
 port = struct('meanfreestream',0,'meandensity',0,'blthickness',0,'yloca',zeros(24,1),'speeds',zeros(24,1));
@@ -543,6 +564,21 @@ ax.Interactions = rotateInteraction;
 legend("Low Velocity","Medium Velocity","High Velocity","Location","northwest")
 hold off
 
+
+
+% Plotting 2d graph of pressure coefficient over the wing for an angle of
+% attack of 3 degrees
+C_pGraph2D = [C_p(55:57,3:19),C_p(55:57,3)]';
+figure()
+plot(xDist,C_pGraph2D,"LineWidth",2)
+ax = gca;
+ax.YDir = 'reverse';
+legend(string(V_free + " m/s"),"Location","northeast","FontSize",20)
+title("Coefficient of Pressure over the wing","FontSize",20)
+xlabel("Normalized chord length","FontSize",18)
+ylabel("Pressure Coefficient","FontSize",18)
+ax = gca;
+ax.FontSize = 16; 
 %% Calculating Normal and axial force coefficient
 
 Cn = zeros(96,1); %Initializing vector
@@ -584,27 +620,33 @@ Cd = Cn.*sind(C_p(:,1)) + Ca.*cosd(C_p(:,1)); %Coefficient of drag for each angl
 %Plotting the coefficient of lift for varying velocities and angles of
 %attack
 figure()
-plot(sortrows(AnglesOfAttack),Cl(1:3:end))
+plot(sortrows(AnglesOfAttack),Cl(1:3:end),"LineWidth",1.5)
 hold on
-plot(sortrows(AnglesOfAttack),Cl(2:3:end))
-plot(sortrows(AnglesOfAttack),Cl(3:3:end))
-title("Coefficient of Lift for different freestream velocities")
-xlabel("Angle of Attack")
-ylabel("Coefficient of Lift")
-legend("Low Velocity","Medium Velocity","High Velocity")
+plot(sortrows(AnglesOfAttack),Cl(2:3:end),"LineWidth",1.5)
+plot(sortrows(AnglesOfAttack),Cl(3:3:end),"LineWidth",1.5)
+title("Coefficient of Lift for Different Freestream Velocities","FontSize",20)
+xlabel("Angle of Attack [°]","FontSize",18)
+ylabel("Coefficient of Lift","FontSize",18)
+legend(string(V_free + " m/s"),"FontSize",20,"Location","northwest")
+xlim([-15,16])
+ax = gca;
+ax.FontSize = 16; 
 hold off
 
 %Plotting the coefficient of drag for varying velocities and angles of
 %attack
 figure()
-plot(sortrows(AnglesOfAttack),Cd(1:3:end))
+plot(sortrows(AnglesOfAttack),Cd(1:3:end),"LineWidth",1.5)
 hold on
-plot(sortrows(AnglesOfAttack),Cd(2:3:end))
-plot(sortrows(AnglesOfAttack),Cd(3:3:end))
-title("Coefficient of Drag for different freestream velocities")
-xlabel("Angle of Attack")
-ylabel("Coefficient of Drag")
-legend("Low Velocity","Medium Velocity","High Velocity")
+plot(sortrows(AnglesOfAttack),Cd(2:3:end),"LineWidth",1.5)
+plot(sortrows(AnglesOfAttack),Cd(3:3:end),"LineWidth",1.5)
+title("Coefficient of Drag for Different Freestream Velocities","FontSize",20)
+xlabel("Angle of Attack [°]","FontSize",18)
+ylabel("Coefficient of Drag","FontSize",18)
+legend(string(V_free + " m/s"),"FontSize",20,"Location","northwest")
+xlim([-15,16])
+ax = gca;
+ax.FontSize = 16; 
 hold off
 
 
