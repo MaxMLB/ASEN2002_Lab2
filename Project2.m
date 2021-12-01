@@ -33,7 +33,7 @@ end
 clear i j
 
 blfiles3 = dir('Exp 2 (airfoil) data files');
-blfiles3 = blfiles3(2:end);
+blfiles3 = blfiles3(3:end);
 names3 = cell(25,1); %to hold the names of each file
 
 Data3 = zeros(240,30,25); %Initialize matrix to store all of the new data
@@ -221,16 +221,15 @@ hold off
 
 figure()
 hold on
-fplot(ybestVent,[0 10],"b-","LineWidth",2)
-fplot(ybestVent-sigma_yVent,[0 10],"r-","LineWidth",1)
-fplot(ybestVent+sigma_yVent,[0 10],"r-","LineWidth",1)
-fplot(ybestPito,[0 10],"g-","LineWidth",2)
-fplot(ybestPito-sigma_yPito,[0 10],"r-","LineWidth",1)
-fplot(ybestPito+sigma_yPito,[0 10],"r-","LineWidth",1)
+fplot(ybestVent,[0 10],"LineWidth",2)
+fplot(ybestPito,[0 10],"LineWidth",2)
+fplot(ybestManoPito,[0 10],"LineWidth",2)
+%fplot(ybestManoVent,[0 10],"LineWidth",2)
 title("Different Velocity Measurement Devices","FontSize",20)
-legend("Venturi","Venturi Error Bar","","Pitostatic","Pitostatic Error Bar","Location","northwest","FontSize",20)
+legend("Venturi","Pitostatic","Manometer","Location","northwest","FontSize",20)
 xlabel("Voltage [V]","FontSize",18)
 ylabel("Velocity [m/s]","FontSize",18)
+ylim([0,60])
 ax = gca;
 ax.FontSize = 16;
 
