@@ -33,7 +33,7 @@ end
 clear i j
 
 blfiles3 = dir('Exp 2 (airfoil) data files');
-blfiles3 = blfiles3(3:end);
+blfiles3 = blfiles3(2:end);
 names3 = cell(25,1); %to hold the names of each file
 
 Data3 = zeros(240,30,25); %Initialize matrix to store all of the new data
@@ -127,10 +127,12 @@ end
 
 % calculate differential pressure
 % Calculate pressure differential given from manometer
-% in. H20 * spec. weight of water [slug/ft^3] * 1/12 [ft] * 32.2 [lb/slug]
+% in. H20 * spec. weight of fluid [slug/ft^3] * 1/12 [ft] * 32.2 [lb/slug]
 % * 47.88 Pa/psf
-p_diff_mano_pitot = [avg_Mano_Pitot(1,:); avg_Mano_Pitot(2,:) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
-p_diff_mano_vent = [avg_Mano_Vent(1,:); avg_Mano_Vent(2,:) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
+% error in each reading is +/- 0.1 in.
+p_diff_mano_pitot = [avg_Mano_Pitot(1,:); avg_Mano_Pitot(2,:) * 1.95 * (1/12) * 32.2 * 47.88]; % [Pa]
+p_diff_mano_vent = [avg_Mano_Vent(1,:); avg_Mano_Vent(2,:) * 1.95 * (1/12) * 32.2 * 47.88]; % [Pa]
+
 
 % each of the above matrices has the voltage in column 1 and the resultant
 % differential pressure in the 2nd column
@@ -138,10 +140,23 @@ p_diff_mano_vent = [avg_Mano_Vent(1,:); avg_Mano_Vent(2,:) * 1.940 * (1/12) * 32
 v_mano_pitot = sqrt(2 .* p_diff_mano_pitot(2,:) .* (R_air.*T_avg./P_avg));
 v_mano_vent = sqrt((2 .* p_diff_mano_vent(2,:) * R_air .* T_avg)./(P_avg.*(1-(1/9.5)^2)));
 
+p_diff_mano_pitot = [p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:)];
+p_diff_mano_vent = [p_diff_mano_vent(1,:);p_diff_mano_vent(1,:);p_diff_mano_vent(1,:);p_diff_mano_vent(1,:);p_diff_mano_vent(1,:)];
+
+[x_hatManoPito, sigma_yManoPito] = LSR(v_mano_pitot,p_diff_mano_pitot);
+[x_hatManoVent, sigma_yManoVent] = LSR(v_mano_vent,p_diff_mano_vent);
+
+syms X; 
+ybestManoPito(X) = x_hatManoPito(1)*X +x_hatManoPito(2);
+ybestManoVent(X) = x_hatManoVent(1)*X +x_hatManoVent(2);
+
 figure();
 subplot(2,1,1);
 hold on;
 plot(p_diff_mano_pitot(1,:),v_mano_pitot,'o')
+fplot(ybestManoPito,[0 10],"k-","LineWidth",2)
+fplot(ybestManoPito-sigma_yManoPito,[0 10],"r-","LineWidth",1)
+fplot(ybestManoPito+sigma_yManoPito,[0 10],"r-","LineWidth",1)
 title('Water Manometer - Pitot Tube')
 xlabel('Voltage')
 ylabel('Velocity [m/s]')
@@ -150,6 +165,9 @@ hold off;
 subplot(2,1,2);
 hold on;
 plot(p_diff_mano_vent(1,:),v_mano_vent,'o')
+fplot(ybestManoVent,[0 10],"k-","LineWidth",2)
+fplot(ybestManoVent-sigma_yManoVent,[0 10],"r-","LineWidth",1)
+fplot(ybestManoVent+sigma_yManoVent,[0 10],"r-","LineWidth",1)
 title('Water Manometer - Venturi Tube')
 xlabel('Voltage')
 ylabel('Velocity [m/s]')

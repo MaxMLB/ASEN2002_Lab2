@@ -33,7 +33,8 @@ end
 clear i j
 
 blfiles3 = dir('Exp 2 (airfoil) data files');
-blfiles3 = blfiles3(3:end);
+
+blfiles3 = blfiles3(2:end);
 names3 = cell(25,1); %to hold the names of each file
 
 Data3 = zeros(240,30,25); %Initialize matrix to store all of the new data
@@ -132,6 +133,7 @@ end
 p_diff_mano_pitot = [avg_Mano_Pitot(1,:); avg_Mano_Pitot(2,:) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
 p_diff_mano_vent = [avg_Mano_Vent(1,:); avg_Mano_Vent(2,:) * 1.940 * (1/12) * 32.2 * 47.88]; % [Pa]
 
+
 % each of the above matrices has the voltage in column 1 and the resultant
 % differential pressure in the 2nd column
 
@@ -192,6 +194,7 @@ plot(plotVoltage,V2_volt)
 fplot(ybestVent,[0 10],"k-","LineWidth",2)
 fplot(ybestVent-sigma_yVent,[0 10],"r-","LineWidth",1)
 fplot(ybestVent+sigma_yVent,[0 10],"r-","LineWidth",1)
+
 title("Venturi Velocity","FontSize",20)
 legend("Best Fit Line","Error Bar","Location","northwest","FontSize",20)
 xlabel("Voltage [V]","FontSize",18)
@@ -215,6 +218,7 @@ xlabel("Voltage [V]","FontSize",18)
 ylabel("Velocity [m/s]","FontSize",18)
 ax = gca;
 ax.FontSize = 16;
+
 
 %% Finding the Boundary Layer Thickness
 port = struct('meanfreestream',0,'meandensity',0,'blthickness',0,'yloca',zeros(24,1),'speeds',zeros(24,1));
@@ -547,7 +551,6 @@ legend("Low Velocity","Medium Velocity","High Velocity","Location","northwest")
 hold off
 
 
-
 % Plotting 2d graph of pressure coefficient over the wing for an angle of
 % attack of 3 degrees
 C_pGraph2D = [C_p(55:57,3:19),C_p(55:57,3)]';
@@ -561,6 +564,7 @@ xlabel("Normalized chord length","FontSize",18)
 ylabel("Pressure Coefficient","FontSize",18)
 ax = gca;
 ax.FontSize = 16; 
+
 %% Calculating Normal and axial force coefficient
 
 Cn = zeros(96,1); %Initializing vector
@@ -602,6 +606,7 @@ Cd = Cn.*sind(C_p(:,1)) + Ca.*cosd(C_p(:,1)); %Coefficient of drag for each angl
 %Plotting the coefficient of lift for varying velocities and angles of
 %attack
 figure()
+
 plot(sortrows(AnglesOfAttack),Cl(1:3:end),"LineWidth",1.5)
 hold on
 plot(sortrows(AnglesOfAttack),Cl(2:3:end),"LineWidth",1.5)
@@ -613,11 +618,13 @@ legend(string(V_free + " m/s"),"FontSize",20,"Location","northwest")
 xlim([-15,16])
 ax = gca;
 ax.FontSize = 16; 
+
 hold off
 
 %Plotting the coefficient of drag for varying velocities and angles of
 %attack
 figure()
+
 plot(sortrows(AnglesOfAttack),Cd(1:3:end),"LineWidth",1.5)
 hold on
 plot(sortrows(AnglesOfAttack),Cd(2:3:end),"LineWidth",1.5)
@@ -629,6 +636,7 @@ legend(string(V_free + " m/s"),"FontSize",20,"Location","northwest")
 xlim([-15,16])
 ax = gca;
 ax.FontSize = 16; 
+
 hold off
 
 
