@@ -5,8 +5,10 @@ close all;
 clc;
 %data = readtable("ASEN 2002_1230_1_WTData.csv.xlsx");
 %waterData = readmatrix("Wind Tunnel Lab Data.csv");
-VenturiData = [0.1;0.5;1.4;3;5];
 
+
+
+R_air = 287; % Gas Constant
 %% Reading in all the data
 blfiles = dir('Exp 1 (voltage to speed) data files');
 blfiles = blfiles(3:end);
@@ -19,8 +21,8 @@ for i= 1:20
     Data(:,:,i) = readmatrix(names{i});
 end
 
+blfiles2 = cell([1,11]);
 %load in the data file names
-
 for i = 1:11
     blfiles2{i} = dir(['Aero Lab Windtunnel Calibration/Aero Lab 1 - 2019 Group Data/BoundaryLayerData/Port ',num2str(i),'/*.csv']);
     %access this by blfiles{1}(1).name for port 1 first file
@@ -31,7 +33,6 @@ for j =1:11
     x=blfiles2{j};
     num_elements(j) = sum(arrayfun(@(x) ~isempty(x.name),x)); %number of datafiles for each port
 end
-
 clear i j
 
 blfiles3 = dir('Exp 2 (airfoil) data files');
@@ -44,42 +45,30 @@ for i= 1:25
     names3{i} = strcat('Exp 2 (airfoil) data files/',blfiles3(i).name);
     Data3(:,:,i) = readmatrix(names3{i});
 end
-
-R_air = 287;
-
+%VenturiData = [0.1;0.5;1.4;3;5];
+mano_data = readtable('Water manometer readings.csv');
 %% Computing for a single Data file
 %voltage = data.AppliedVoltage_V_;
-
 %ChangeIndexes = [0;find(diff(voltage) >.1);length(voltage)];
-
-
 %averageData = zeros(5,13);
 %stdData = zeros(5,13);
-
-
 %for i = 1:length(ChangeIndexes)-1
     %averageData(i,:) = mean(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
     %stdData(i,:) = std(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
 %end
 %p_1 = averageData(:,5);
 %p_2 = averageData(:,6);
-
 %t_avg = averageData(:,1);
 %p_avg = averageData(:,2);
-
 %v_volt = sqrt(2*p_1.*(R_air.*t_avg./p_avg));
 %v2_volt = sqrt((2.*p_2*R_air.*t_avg)./(p_avg.*(1-(1/9.5)^2)));
-
 %V_volt_Avg = mean([V_volt';V2_volt']);
-
 %Voltage1 = averageData(:,13);
-
 %figure()
 %hold on
 %plot(Voltage1,v_volt);
 %plot(Voltage1,v2_volt);
 %hold off
-
 %% Computing the values for each data set and graphing it.
 
 idxVoltage = zeros(20,1);
@@ -96,7 +85,6 @@ plotVoltage = zeros(5,20);
 for i = 1:20
     for j = 1:length(ChangeIndexes)-1
         AverageData(j,:,i) = mean(Data(ChangeIndexes(j)+1:ChangeIndexes(j+1),1:29,i));
-        %stdData(i,:) = std(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
     end
     plotVoltage(:,i) = AverageData(:,idxVoltage(i),i);
 end
@@ -105,52 +93,39 @@ P_2 = permute(AverageData(:,6,:),[1,3,2]);
 T_avg = permute(AverageData(:,1,:),[1,3,2]);
 P_avg = permute(AverageData(:,2,:),[1,3,2]);
 
-
 V_volt = sqrt(2*P_1.*(R_air.*T_avg./P_avg));
 V2_volt = sqrt((2.*P_2*R_air.*T_avg)./(P_avg.*(1-(1/9.5)^2)));
 
 %% Read in the Manometer readings
 % I moved this down to access the temperature and pressure vals
-mano_data = readtable('Water manometer readings.csv');
 mano_data_vent = zeros(50,1);
 mano_data_pitot = zeros(50,1);
 %formatting and adjusting the csv file matrix
 for i = 1:30
-    if string(mano_data{i,3}) == 'Venturi tube'
-        
+    if string(mano_data{i,3}) == "Venturi tube"
         mano_data_vent(i,1:10) = [mano_data{i,4:13}];
         mano_data_vent(~any(mano_data_vent,2), :) = [];
-        
-    elseif string(mano_data{i,3}) == 'Pitot Static Probe'
-        
+    elseif string(mano_data{i,3}) == "Pitot Static Probe"
         mano_data_pitot(i,1:10) = [mano_data{i,4:13}];
         mano_data_pitot(~any(mano_data_pitot,2), :) = [];
-        
     end
-    
 end
-
 % get data into voltage in column 1 and height diff in column 2
 % more efficient way to do this but im lazy
 mano_data_pitot = [mano_data_pitot(:,1:2); mano_data_pitot(:,3:4); mano_data_pitot(:,5:6); mano_data_pitot(:,7:8); mano_data_pitot(:,9:10);];
 mano_data_vent = [mano_data_vent(:,1:2); mano_data_vent(:,3:4); mano_data_vent(:,5:6); mano_data_vent(:,7:8); mano_data_vent(:,9:10);];
-
 mano_data_pitot = sort(mano_data_pitot);
 mano_data_vent = sort(mano_data_vent);
-
 % calculate average values at each voltage point
 voltageVals = 0.5:0.5:10;
 avg_Mano_Pitot = [voltageVals; zeros(1,20)];
 avg_Mano_Vent = [voltageVals; zeros(1,20)];
 
 for i = 1:length(voltageVals)
-    
     idx1 = mano_data_pitot == voltageVals(i);
     idx2 = mano_data_vent == voltageVals(i);
     avg_Mano_Pitot(2,i) = mean(mano_data_pitot(idx1(:,1),2));
     avg_Mano_Vent(2,i) = mean(mano_data_vent(idx2(:,1),2));
-    
-    
 end
 
 % calculate differential pressure
@@ -183,14 +158,12 @@ xlabel('Voltage')
 ylabel('Velocity [m/s]')
 hold off;
 
-
 %% finding least squares and associated error
 Sigma_diffP = 0.01* 6.89476 * 10^3;
 sigmaAbsP = (250-20)*10^3*0.015;
 sigmaT = 0.25;
 
 %finding the uncertainty of each value
-
 WPito  = zeros(100,1);
 x = 1;
 for i = 1:20
@@ -200,9 +173,6 @@ for i = 1:20
         x = x+1;
     end
 end
-
-
-
 
 [x_hatPito, sigma_yPito] = LSR(V_volt,plotVoltage);
 [x_hatVent, sigma_yVent] = LSR(V2_volt,plotVoltage);
@@ -228,7 +198,6 @@ fplot(ybestVent+sigma_yVent,[0 10],"r-","LineWidth",1)
 title("Venturi Velocity")
 hold off
 
-
 %% Finding the Boundary Layer Thickness
 
 for i = 1:11 %port incrementer
@@ -239,13 +208,13 @@ for i = 1:11 %port incrementer
         %need to group based on data(:,6)
         y = data(:,6);
         y_ind = find(diff(y)>.2); %indicies that correspond to the change of position
-
-        y_ind = [0;y_ind;length(y)];
+        
+        y_ind2 = [0;y_ind;length(y)];
         %and now group the data
         R = 287;
-        bobby = NaN(length(y_ind)-1,8); %preallocate for speeeed!
-        for b = 1:length(y_ind)-1
-           temp = mean(data(y_ind(b)+1:y_ind(b+1),:)); %the grouped data based on vertical position and then averaged across all samples
+        bobby = NaN(length(y_ind2)-1,8); %preallocate for speeeed!
+        for b = 1:length(y_ind2)-1
+           temp = mean(data(y_ind2(b)+1:y_ind2(b+1),:)); %the grouped data based on vertical position and then averaged across all samples
            bobby(b,:) = [temp,sqrt(2*temp(4)*(R*temp(2)/temp(1)))]; %put in the probe airspeed as part of the array
            %bobby is an array of the collapsed data (one row per vertical location
            %and the probe airspeed in the 8th column. Note: for one data
@@ -306,17 +275,33 @@ toc
 
 %% Finding Pressure at trailing edge
 angleOfAttack = zeros(4,25);
-Pressure = zeros(4,30,25);
+Pressure = zeros(12,30,25);
 
 for i = 1:25
-    for j = 1:4
-        Beginidx = (j-1)*60+1;
-        EndIdx = j*60;
+    for j = 1:12
+        Beginidx = (j-1)*20+1;
+        EndIdx = j*20;
         Pressure(j,:,i) = mean(Data3(Beginidx:EndIdx,:,i));
-        angleOfAttack(j,i) = Pressure(j,7,i);
+        if rem(j,3) == 0
+            angleOfAttack(j/3,i) = Pressure(j,7,i);
+        end
     end
 end
 Pressure(:,30,:) = [];
+
+% Finding the average voltage for voltage level 1
+VoltVals = zeros(100,3);
+x = 1;
+for i = 1:25
+    for j = 1:4
+        VoltVals(x,1) = Pressure((j-1)*3+1,13,i);
+        VoltVals(x,2) = Pressure((j-1)*3+2,13,i);
+        VoltVals(x,3) = Pressure((j-1)*3+3,13,i);
+        x = x+1;
+    end
+end
+clear x
+VoltLevels = mean(VoltVals);
 
 Indexes = zeros(25,8);
 
@@ -329,72 +314,107 @@ Indexes(:,6) = angleOfAttack(1,:) == -12;
 Indexes(:,7) = angleOfAttack(1,:) == -13;
 Indexes(:,8) = angleOfAttack(1,:) == -14;
 Indexes = logical(Indexes);
-AnglesOfAttack = reshape(angleOfAttack(1:32),[],1);
-PortPoints = zeros(32,17);
-PortPoints(:,1) = AnglesOfAttack;
+AnglesOfAttack = reshape(angleOfAttack(1:32),[],1); % Grabs all angles of attacks and their occurances
+PortPoints = zeros(96,18);
+PortPoints(:,1) = [AnglesOfAttack;AnglesOfAttack;AnglesOfAttack];
+PortPoints(1:32,2) = VoltLevels(1);
+PortPoints(33:64,2) = VoltLevels(2);
+PortPoints(65:96,2) = VoltLevels(3);
 
 %Looping through to find a single value for the pressure ports for each
 %angle of attack
 for i = 1:8
     PortData = Pressure(:,14:29,Indexes(:,i));
     PortDataMean = mean(PortData,3);
-    PortPoints((i-1)*4+1:i*4,2:end) = PortDataMean;
+    PortPoints((i-1)*4+1:i*4,3:end) = PortDataMean([1,4,7,10],:);
+    PortPoints((i-1)*4+33:i*4+32,3:end) = PortDataMean([2,5,8,11],:);
+    PortPoints((i-1)*4+65:i*4+64,3:end) = PortDataMean([3,6,9,12],:);
 end
 clear PortData PortDataMean
 PortPoints = sortrows(PortPoints);
 % Finding the pressure at the trailing edge from the high and low pressure
 % values
-P11 = zeros(32,2);
+P11 = zeros(96,2);
 P11(:,1) = PortPoints(:,1);
 
-for i = 1:32
-    PHigh = (PortPoints(i,10)-PortPoints(i,9)) + PortPoints(i,10); %Linearly interpolates for the pressure ports on top of the wing
-    PLow = (PortPoints(i,11)-PortPoints(i,12)) + PortPoints(i,11); %Linearly interpolates for the pressure ports on bottom of the wing
-    P11(i,2) = mean([PLow,PHigh]); %Finds the average between the 2 linear interpolations and stores it to p11
+for j = 1:3
+    for i = 1:32
+        PHigh = (PortPoints((i-1)*3+j,10)-PortPoints((i-1)*3+j,9)) + PortPoints((i-1)*3+j,10); %Linearly interpolates for the pressure ports on top of the wing
+        PLow = (PortPoints((i-1)*3+j,11)-PortPoints((i-1)*3+j,12)) + PortPoints((i-1)*3+j,11); %Linearly interpolates for the pressure ports on bottom of the wing
+        P11((i-1)*3+j,2) = mean([PLow,PHigh]); %Finds the average between the 2 linear interpolations and stores it to p11
+    end
 end
 clear PHigh PLow
 figure()
-plot(P11(:,1),P11(:,2),".-")
+P11Graph = P11(1:3:end,:);
+plot(P11Graph(:,1),P11Graph(:,2),".-")
+title("Pressure at trailing edge for low voltage")
+xlabel("Angle of Attack")
+ylabel("Pressure at trailing edge")
+
+figure()
+P11Graph = P11(2:3:end,:);
+plot(P11Graph(:,1),P11Graph(:,2),".-")
+title("Pressure at trailing edge for Medium voltage")
+xlabel("Angle of Attack")
+ylabel("Pressure at trailing edge")
+figure()
+P11Graph = P11(3:3:end,:);
+plot(P11Graph(:,1),P11Graph(:,2),".-")
+title("Pressure at trailing edge for High voltage")
 xlabel("Angle of Attack")
 ylabel("Pressure at trailing edge")
 
 %% Calculating Coefficient of Pressure at each point for each angle of attack
-% I think we have to use the pressure version of the EQn, with the
-% calculated pressure P_avg being the freestream pressure and each value
-% measured at the ports as p
-% Cp = (p-p_free) / (1/2 rho_free v_free^2)
+
 P_atm  = mean(Pressure(:,2,:),"all"); %Finds the average freestream pressure
 T_atm = mean(Pressure(:,1,:),"all"); %Finds the average freestream temperature
-V_freeAvg = mean(Pressure(:,4,:),"all"); %Finds the average freestream velocity
+V_free = zeros(3,1);
+
+ %Finds the average freestream velocity from the voltages by average the
+ %best fit for the venturi and pito tube
+for i = 1:3
+    pito = x_hatPito(1)*VoltLevels(i) + x_hatPito(2);
+    vent = x_hatVent(1)*VoltLevels(i) + x_hatVent(2);
+    V_free(i) =  mean([pito,vent]);
+end
+
 
 rho_free = P_atm ./ (R_air * T_atm); %Calculates freestream density
 
 
-V_var = (10:2:30)';
-PortPressure = [PortPoints(:,1:10), P11(:,2), PortPoints(:,11:end)]; %Creates array holding the pressure at each port for each angle of attack
+PortPressure = [PortPoints(:,1:10), P11(:,2), PortPoints(:,11:end)]; %Creates array holding the pressure at each port for each angle of attack for each velocity
 
-C_p = zeros(32,18,10);
-C_p(:,1) = PortPressure(:,1,:);
-for k = 1:11
-    Q_free = 0.5*rho_free*V_var(k)^2; %Calculates freestream dynamic pressure Pa
-    for i = 1:32
-        for j = 2:18
-            C_p(i,j,k) = (PortPressure(i,j))/Q_free;
-        end
+C_p = zeros(96,19);
+C_p(:,1) = PortPressure(:,1);
+C_p(1:3:end,2) = V_free(1);
+C_p(2:3:end,2) = V_free(2);
+C_p(3:3:end,2) = V_free(3);
+for i = 1:96
+    if rem(i,3) == 1
+        Q_free = 0.5*rho_free*V_free(1)^2; %Calculates freestream dynamic pressure Pa
+    elseif rem(i,3) == 2
+        Q_free = 0.5*rho_free*V_free(2)^2; %Calculates freestream dynamic pressure Pa
+    elseif rem(i,3) == 0
+        Q_free = 0.5*rho_free*V_free(3)^2; %Calculates freestream dynamic pressure Pa
+    end
+    for j = 3:19
+        C_p(i,j) = (PortPressure(i,j))/Q_free;
     end
 end
 
-
 %% Plotting the coefficient of pressure vs normalized chord length
-xDist = [0;0.175;0.35;0.7;1.05;1.4;1.75;2.1;2.8;3.5;2.8;2.1;1.4;1.05;0.7;0.35;0.175;0]/3.5;
+xDist = [0;0.175;0.35;0.7;1.05;1.4;1.75;2.1;2.8;3.5;2.8;2.1;1.4;1.05;0.7;0.35;0.175;0]/3.5; %Normalized X chord distanced for each pressure port
 
+%Making a 3d plot of the coeficient of pressure vs angle of attack over the
+%entire wing
 figure()
-C_pGraph = [C_p(16,2:18,:),C_p(16,2,:)];
-C_pGraph = permute(C_pGraph,[2,3,1]);
-C_pGraph2 = flip(C_pGraph(10:18,:),1);
-C_pGraphPort15 = mean(C_pGraph2(6:7,:))
-C_pGraph2 = [C_pGraph2(6:7,:)]
-
+C_pGraph = [C_p(1:3:end,3:19),C_p(1:3:end,3)];
+C_pGraph2 = flip(C_pGraph(:,10:18),2);
+C_pGraphPort15 = mean(C_pGraph2(:,6:7),2);
+C_pGraph2 = [C_pGraph2(:,1:6),C_pGraphPort15,C_pGraph2(:,7:end)];
+C_pGraph = C_pGraph';
+C_pGraph2 = C_pGraph2';
 surf(C_pGraph(1:10,:),'FaceLighting','gouraud',...
     'MeshStyle','column',...
     'SpecularColorReflectance',0,...
@@ -406,7 +426,7 @@ surf(C_pGraph(1:10,:),'FaceLighting','gouraud',...
     'LineWidth',0.2,...
     'FaceAlpha',0.2,...
     'FaceColor',[0.07 0.6 1],...
-    'EdgeAlpha',0.2)
+    'EdgeAlpha',0.5)
 hold on
 surf(C_pGraph2,'SpecularExponent',1,...
     'SpecularStrength',1,...
@@ -415,22 +435,85 @@ surf(C_pGraph2,'SpecularExponent',1,...
     'FaceColor',[0.5 0.5 .5],...
     'AlignVertexCenters','on',...
     'LineWidth',0.2,...
-    'EdgeAlpha',1)
+    'FaceAlpha',0.5,...
+    'EdgeAlpha',0.5)
+ylim([1,10])
 yticks((1:10))
 yticklabels(xDist(1:10))
-xticks(1:11)
-xticklabels(V_var)
+ylabel("Normalized Chord Length")
+xlim([1,32])
+xticks(1:32)
+xticklabels(sortrows(AnglesOfAttack))
+xlabel("Angle of Attack")
+zlabel("Pressure Coefficient")
 ax = gca;
 ax.ZDir = 'reverse';
-
 hold off
 
 
+%% Calculating Normal and axial force coefficient
+
+Cn = zeros(96,1); %Initializing vector
+Ca = zeros(96,1);
+
+yDist = [.14665,.33075,.4018,.476,.49,.4774,.4403,.38325,.21875,0,0,0,0,0,.0014,.0175,.03885,0.14665]'/3.5; %Normalized Y location for each pressure port
+
+for i = 1:96
+    C_n_tot = zeros(17,1); %Holds the value to be summed for each row
+    C_a_tot = zeros(17,1);
+    for j = 3:19
+        if j ~= 19
+            Cpi1 = C_p(i,j+1);
+        else
+            Cpi1 = C_p(i,3);
+        end
+        Cpi = C_p(i,j);
+        k = j-2;
+        DeltaX = xDist(k+1)-xDist(k);
+        DeltaY = yDist(k+1)-yDist(k);
+        CnElement = 0.5*(Cpi+Cpi1)*DeltaX;
+        CaElement = 0.5*(Cpi+Cpi1)*DeltaY;
+        C_n_tot(k) = CnElement;
+        C_a_tot(k) = CaElement;
+    end
+    CnLocal = -1* sum(C_n_tot);
+    Cn(i) = CnLocal;
+
+    CaLocal = sum(C_a_tot);
+    Ca(i) = CaLocal;
+end
 
 
+%% Finding Coefficient of lift and Drag
 
+Cl = Cn.*cosd(C_p(:,1)) - Ca.*sind(C_p(:,1)); %Coefficient of Lift for each angle of attack and velocity
+Cd = Cn.*sind(C_p(:,1)) + Ca.*cosd(C_p(:,1)); %Coefficient of drag for each angle of attack and velocity
 
+%Plotting the coefficient of lift for varying velocities and angles of
+%attack
+figure()
+plot(sortrows(AnglesOfAttack),Cl(1:3:end))
+hold on
+plot(sortrows(AnglesOfAttack),Cl(2:3:end))
+plot(sortrows(AnglesOfAttack),Cl(3:3:end))
+title("Coefficient of Lift for different freestream velocities")
+xlabel("Angle of Attack")
+ylabel("Coefficient of Lift")
+legend("Low Velocity","Medium Velocity","High Velocity")
+hold off
 
+%Plotting the coefficient of drag for varying velocities and angles of
+%attack
+figure()
+plot(sortrows(AnglesOfAttack),Cd(1:3:end))
+hold on
+plot(sortrows(AnglesOfAttack),Cd(2:3:end))
+plot(sortrows(AnglesOfAttack),Cd(3:3:end))
+title("Coefficient of Drag for different freestream velocities")
+xlabel("Angle of Attack")
+ylabel("Coefficient of Drag")
+legend("Low Velocity","Medium Velocity","High Velocity")
+hold off
 
 
 
