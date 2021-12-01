@@ -345,20 +345,20 @@ clear PHigh PLow
 figure()
 P11Graph = P11(1:3:end,:);
 plot(P11Graph(:,1),P11Graph(:,2),".-")
-title("Pressure at trailing edge for low voltage")
+title("Pressure at trailing edge for low Velocity")
 xlabel("Angle of Attack")
 ylabel("Pressure at trailing edge")
 
 figure()
 P11Graph = P11(2:3:end,:);
 plot(P11Graph(:,1),P11Graph(:,2),".-")
-title("Pressure at trailing edge for Medium voltage")
+title("Pressure at trailing edge for Medium velocity")
 xlabel("Angle of Attack")
 ylabel("Pressure at trailing edge")
 figure()
 P11Graph = P11(3:3:end,:);
 plot(P11Graph(:,1),P11Graph(:,2),".-")
-title("Pressure at trailing edge for High voltage")
+title("Pressure at trailing edge for High Velocity")
 xlabel("Angle of Attack")
 ylabel("Pressure at trailing edge")
 
@@ -404,39 +404,27 @@ end
 xDist = [0;0.175;0.35;0.7;1.05;1.4;1.75;2.1;2.8;3.5;2.8;2.1;1.4;1.05;0.7;0.35;0.175;0]/3.5; %Normalized X chord distanced for each pressure port
 
 %Making a 3d plot of the coeficient of pressure vs angle of attack over the
-%entire wing
+%entire wing for various velocities
 figure()
+sgtitle("Coefficient of Pressure over the wing for various angles of attack and velocity")
 C_pGraph = [C_p(1:3:end,3:19),C_p(1:3:end,3)];
 C_pGraph2 = flip(C_pGraph(:,10:18),2);
 C_pGraphPort15 = mean(C_pGraph2(:,6:7),2);
 C_pGraph2 = [C_pGraph2(:,1:6),C_pGraphPort15,C_pGraph2(:,7:end)];
 C_pGraph = C_pGraph';
 C_pGraph2 = C_pGraph2';
-surf(C_pGraph(1:10,:),'FaceLighting','gouraud',...
-    'MeshStyle','column',...
-    'SpecularColorReflectance',0,...
-    'SpecularExponent',5,...
-    'SpecularStrength',0.2,...
-    'DiffuseStrength',1,...
-    'AmbientStrength',0.4,...
-    'AlignVertexCenters','on',...
-    'LineWidth',0.2,...
-    'FaceAlpha',0.2,...
-    'FaceColor',[0.07 0.6 1],...
-    'EdgeAlpha',0.5)
+
+subplot(2,2,1)
+surf(C_pGraph(1:10,:),'FaceLighting','gouraud','MeshStyle','column','SpecularColorReflectance',0,'SpecularExponent',5,...
+    'SpecularStrength',1,'DiffuseStrength',1,'AmbientStrength',0.4,'AlignVertexCenters','on','LineWidth',1.5,...
+    'FaceAlpha',0.5,'FaceColor',[0.07 0.6 1],'EdgeAlpha',1)
 hold on
-surf(C_pGraph2,'SpecularExponent',1,...
-    'SpecularStrength',1,...
-    'DiffuseStrength',1,...
-    'AmbientStrength',0.4,...
-    'FaceColor',[0.5 0.5 .5],...
-    'AlignVertexCenters','on',...
-    'LineWidth',0.2,...
-    'FaceAlpha',0.5,...
-    'EdgeAlpha',0.5)
+surf(C_pGraph2,'SpecularExponent',1,'MeshStyle','column','SpecularStrength',1,'DiffuseStrength',1,'AmbientStrength',0.4,...
+    'FaceColor',[0.5 0.5 .5],'AlignVertexCenters','on','LineWidth',1.5,'FaceAlpha',0.5,'EdgeAlpha',1)
 ylim([1,10])
 yticks((1:10))
 yticklabels(xDist(1:10))
+title("Low Velocity")
 ylabel("Normalized Chord Length")
 xlim([1,32])
 xticks(1:32)
@@ -445,8 +433,97 @@ xlabel("Angle of Attack")
 zlabel("Pressure Coefficient")
 ax = gca;
 ax.ZDir = 'reverse';
+ax.Interactions = rotateInteraction;
+legend("Top of Wing","Bottom of Wing","Location","northwest")
 hold off
 
+
+C_pGraph3 = [C_p(2:3:end,3:19),C_p(2:3:end,3)];
+C_pGraph4 = flip(C_pGraph3(:,10:18),2);
+C_pGraphPort15_2 = mean(C_pGraph4(:,6:7),2);
+C_pGraph4 = [C_pGraph4(:,1:6),C_pGraphPort15_2,C_pGraph4(:,7:end)];
+C_pGraph3 = C_pGraph3';
+C_pGraph4 = C_pGraph4';
+subplot(2,2,2)
+surf(C_pGraph3(1:10,:),'FaceLighting','gouraud','MeshStyle','column','SpecularColorReflectance',0,'SpecularExponent',5,...
+    'SpecularStrength',1,'DiffuseStrength',1,'AmbientStrength',0.4,'AlignVertexCenters','on','LineWidth',1.5,...
+    'FaceAlpha',0.5,'FaceColor',[0.07 0.6 1],'EdgeAlpha',1)
+hold on
+surf(C_pGraph4,'SpecularExponent',1,'MeshStyle','column','SpecularStrength',1,'DiffuseStrength',1,'AmbientStrength',0.4,...
+    'FaceColor',[0.5 0.5 .5],'AlignVertexCenters','on','LineWidth',1.5,'FaceAlpha',0.5,'EdgeAlpha',1)
+ylim([1,10])
+yticks((1:10))
+yticklabels(xDist(1:10))
+title("Medium Velocity")
+ylabel("Normalized Chord Length")
+xlim([1,32])
+xticks(1:32)
+xticklabels(sortrows(AnglesOfAttack))
+xlabel("Angle of Attack")
+zlabel("Pressure Coefficient")
+ax = gca;
+ax.ZDir = 'reverse';
+ax.Interactions = rotateInteraction;
+legend("Top of Wing","Bottom of Wing","Location","northwest")
+hold off
+
+C_pGraph5 = [C_p(3:3:end,3:19),C_p(3:3:end,3)];
+C_pGraph6 = flip(C_pGraph5(:,10:18),2);
+C_pGraphPort15_3 = mean(C_pGraph6(:,6:7),2);
+C_pGraph4 = [C_pGraph6(:,1:6),C_pGraphPort15_3,C_pGraph6(:,7:end)];
+C_pGraph5 = C_pGraph5';
+C_pGraph6 = C_pGraph6';
+subplot(2,2,3)
+surf(C_pGraph5(1:10,:),'FaceLighting','gouraud','MeshStyle','column','SpecularColorReflectance',0,'SpecularExponent',5,...
+    'SpecularStrength',1,'DiffuseStrength',1,'AmbientStrength',0.4,'AlignVertexCenters','on','LineWidth',1.5,...
+    'FaceAlpha',0.5,'FaceColor',[0.07 0.6 1],'EdgeAlpha',1)
+hold on
+surf(C_pGraph6,'SpecularExponent',1,'MeshStyle','column','SpecularStrength',1,'DiffuseStrength',1,'AmbientStrength',0.4,...
+    'FaceColor',[0.5 0.5 .5],'AlignVertexCenters','on','LineWidth',1.5,'FaceAlpha',0.5,'EdgeAlpha',1)
+ylim([1,10])
+yticks((1:10))
+yticklabels(xDist(1:10))
+title("High Velocity")
+ylabel("Normalized Chord Length")
+xlim([1,32])
+xticks(1:32)
+xticklabels(sortrows(AnglesOfAttack))
+xlabel("Angle of Attack")
+zlabel("Pressure Coefficient")
+ax = gca;
+ax.ZDir = 'reverse';
+ax.Interactions = rotateInteraction;
+legend("Top of Wing","Bottom of Wing","Location","northwest")
+hold off
+
+
+subplot(2,2,4)
+surf(C_pGraph(1:10,:),'FaceLighting','gouraud','MeshStyle','column','SpecularColorReflectance',0,'SpecularExponent',5,...
+    'SpecularStrength',1,'DiffuseStrength',1,'AmbientStrength',0.4,'AlignVertexCenters','on','LineWidth',1.5,...
+    'FaceAlpha',0.8,'FaceColor',[0 0.25 1],'EdgeAlpha',1)
+hold on
+surf(C_pGraph3(1:10,:),'FaceLighting','gouraud','MeshStyle','column','SpecularColorReflectance',0,'SpecularExponent',5,...
+    'SpecularStrength',1,'DiffuseStrength',1,'AmbientStrength',0.4,'AlignVertexCenters','on','LineWidth',1.5,...
+    'FaceAlpha',0.6,'FaceColor',[0 0.863 0.259],'EdgeAlpha',1)
+surf(C_pGraph5(1:10,:),'FaceLighting','gouraud','MeshStyle','column','SpecularColorReflectance',0,'SpecularExponent',5,...
+    'SpecularStrength',1,'DiffuseStrength',1,'AmbientStrength',0.4,'AlignVertexCenters','on','LineWidth',1.5,...
+    'FaceAlpha',0.3,'FaceColor',[1 0.306 0],'EdgeAlpha',1)
+
+ylim([1,10])
+yticks((1:10))
+yticklabels(xDist(1:10))
+title("Pressure over the top for different velocities")
+ylabel("Normalized Chord Length")
+xlim([1,32])
+xticks(1:32)
+xticklabels(sortrows(AnglesOfAttack))
+xlabel("Angle of Attack")
+zlabel("Pressure Coefficient")
+ax = gca;
+ax.ZDir = 'reverse';
+ax.Interactions = rotateInteraction;
+legend("Low Velocity","Medium Velocity","High Velocity","Location","northwest")
+hold off
 
 %% Calculating Normal and axial force coefficient
 
