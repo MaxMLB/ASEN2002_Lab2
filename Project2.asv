@@ -203,14 +203,14 @@ hold off
 
 figure()
 hold on
-fplot(ybestVent,[0 10],"b-","LineWidth",2)
+fplot(ybestVent,[0 10],"k-","LineWidth",2)
 fplot(ybestVent-sigma_yVent,[0 10],"r-","LineWidth",1)
 fplot(ybestVent+sigma_yVent,[0 10],"r-","LineWidth",1)
-fplot(ybestPito,[0 10],"g-","LineWidth",2)
+fplot(ybestPito,[0 10],"k-","LineWidth",2)
 fplot(ybestPito-sigma_yPito,[0 10],"r-","LineWidth",1)
 fplot(ybestPito+sigma_yPito,[0 10],"r-","LineWidth",1)
-title("Different Velocity Measurement Devices","FontSize",20)
-legend("Venturi","Venturi Error Bar","","Pitostatic","Pitostatic Error Bar","Location","northwest","FontSize",20)
+title("Venturi Velocity","FontSize",20)
+legend("Best Fit Line","Error Bar","Location","northwest","FontSize",20)
 xlabel("Voltage [V]","FontSize",18)
 ylabel("Velocity [m/s]","FontSize",18)
 ax = gca;
