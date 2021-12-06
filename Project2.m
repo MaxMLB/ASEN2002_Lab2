@@ -44,29 +44,8 @@ for i= 1:25
 end
 %VenturiData = [0.1;0.5;1.4;3;5];
 mano_data = readtable('Water manometer readings.csv');
-%% Computing for a single Data file
-%voltage = data.AppliedVoltage_V_;
-%ChangeIndexes = [0;find(diff(voltage) >.1);length(voltage)];
-%averageData = zeros(5,13);
-%stdData = zeros(5,13);
-%for i = 1:length(ChangeIndexes)-1
-    %averageData(i,:) = mean(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
-    %stdData(i,:) = std(data{ChangeIndexes(i)+1:ChangeIndexes(i+1),1:13});
-%end
-%p_1 = averageData(:,5);
-%p_2 = averageData(:,6);
-%t_avg = averageData(:,1);
-%p_avg = averageData(:,2);
-%v_volt = sqrt(2*p_1.*(R_air.*t_avg./p_avg));
-%v2_volt = sqrt((2.*p_2*R_air.*t_avg)./(p_avg.*(1-(1/9.5)^2)));
-%V_volt_Avg = mean([V_volt';V2_volt']);
-%Voltage1 = averageData(:,13);
-%figure()
-%hold on
-%plot(Voltage1,v_volt);
-%plot(Voltage1,v2_volt);
-%hold off
-%% Computing the values for each data set and graphing it.
+
+%% Computing the values for each data set
 
 idxVoltage = zeros(20,1);
 Voltage = zeros(100,20);
@@ -77,11 +56,13 @@ end
 ChangeIndexes = [0;find(diff(Voltage(:,i)) >.1);length(Voltage(:,i))];
 
 AverageData = zeros(length(ChangeIndexes)-1,29,20);
+AverageStd = zeros(length(ChangeIndexes)-1,29,20);
 
 plotVoltage = zeros(5,20);
 for i = 1:20
     for j = 1:length(ChangeIndexes)-1
         AverageData(j,:,i) = mean(Data(ChangeIndexes(j)+1:ChangeIndexes(j+1),1:29,i));
+        AverageStd(j,:,i) = std(Data(ChangeIndexes(j)+1:ChangeIndexes(j+1),1:29,i));
     end
     plotVoltage(:,i) = AverageData(:,idxVoltage(i),i);
 end
@@ -114,7 +95,7 @@ mano_data_vent = [mano_data_vent(:,1:2); mano_data_vent(:,3:4); mano_data_vent(:
 mano_data_pitot = sort(mano_data_pitot);
 mano_data_vent = sort(mano_data_vent);
 % calculate average values at each voltage point
-voltageVals = 0.5:0.5:10;
+voltageVals = (0.5:0.5:10);
 avg_Mano_Pitot = [voltageVals; zeros(1,20)];
 avg_Mano_Vent = [voltageVals; zeros(1,20)];
 
@@ -140,11 +121,12 @@ p_diff_mano_vent = [avg_Mano_Vent(1,:); avg_Mano_Vent(2,:) * 1.95 * (1/12) * 32.
 v_mano_pitot = sqrt(2 .* p_diff_mano_pitot(2,:) .* (R_air.*T_avg./P_avg));
 v_mano_vent = sqrt((2 .* p_diff_mano_vent(2,:) * R_air .* T_avg)./(P_avg.*(1-(1/9.5)^2)));
 
-p_diff_mano_pitot = [p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:)];
-p_diff_mano_vent = [p_diff_mano_vent(1,:);p_diff_mano_vent(1,:);p_diff_mano_vent(1,:);p_diff_mano_vent(1,:);p_diff_mano_vent(1,:)];
+volt_diff_mano_pitot = [p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:); p_diff_mano_pitot(1,:)];
+volt_diff_mano_vent = [p_diff_mano_vent(1,:);p_diff_mano_vent(1,:);p_diff_mano_vent(1,:);p_diff_mano_vent(1,:);p_diff_mano_vent(1,:)];
 
-[x_hatManoPito, sigma_yManoPito] = LSR(v_mano_pitot,p_diff_mano_pitot);
-[x_hatManoVent, sigma_yManoVent] = LSR(v_mano_vent,p_diff_mano_vent);
+[x_hatManoPito] = LSR(v_mano_pitot,volt_diff_mano_pitot);
+[x_hatManoVent] = LSR(v_mano_vent,volt_diff_mano_vent);
+[sigma_yVentMano,sigma_yPitoMano] = VelocityManometerError(AverageData,plotVoltage,p_diff_mano_pitot',p_diff_mano_vent');
 
 syms X; 
 ybestManoPito(X) = x_hatManoPito(1)*X +x_hatManoPito(2);
@@ -155,8 +137,6 @@ subplot(2,1,1);
 hold on;
 plot(p_diff_mano_pitot(1,:),v_mano_pitot,'o')
 fplot(ybestManoPito,[0 10],"k-","LineWidth",2)
-fplot(ybestManoPito-sigma_yManoPito,[0 10],"r-","LineWidth",1)
-fplot(ybestManoPito+sigma_yManoPito,[0 10],"r-","LineWidth",1)
 title('Water Manometer - Pitot Tube')
 xlabel('Voltage')
 ylabel('Velocity [m/s]')
@@ -166,31 +146,23 @@ subplot(2,1,2);
 hold on;
 plot(p_diff_mano_vent(1,:),v_mano_vent,'o')
 fplot(ybestManoVent,[0 10],"k-","LineWidth",2)
-fplot(ybestManoVent-sigma_yManoVent,[0 10],"r-","LineWidth",1)
-fplot(ybestManoVent+sigma_yManoVent,[0 10],"r-","LineWidth",1)
 title('Water Manometer - Venturi Tube')
 xlabel('Voltage')
 ylabel('Velocity [m/s]')
 hold off;
 
 %% finding least squares and associated error
-Sigma_diffP = 0.01* 6.89476 * 10^3;
-sigmaAbsP = (250-20)*10^3*0.015;
-sigmaT = 0.25;
+Sigma_diffP = 0.01* 6.89476 * 10^3; %Systematic Error in differential pressure transducer
+sigmaAbsP = (250-20)*10^3*0.015; %Systematic error in the absoluted pressure values
+sigmaT = 0.25; %Systematic error in the temperature data
+SigmaPman = 0.05; %Manometer Systematic error
 
-%finding the uncertainty of each value
-WPito  = zeros(100,1);
-x = 1;
-for i = 1:20
-    for j = 1:5
-        uncertainty = GUPito(AverageData(j,5,i),AverageData(j,1,i),AverageData(j,2,i));
-        WPito(x) = uncertainty;
-        x = x+1;
-    end
-end
+[x_hatPito] = LSR(V_volt,plotVoltage);
+[x_hatVent] = LSR(V2_volt,plotVoltage);
 
-[x_hatPito, sigma_yPito] = LSR(V_volt,plotVoltage);
-[x_hatVent, sigma_yVent] = LSR(V2_volt,plotVoltage);
+[sigmaExtVent,sigmaExtPito] = VelocityError(AverageData,plotVoltage);
+yBestPitoVals = (x_hatPito(1).*voltageVals +x_hatPito(2))';
+yBestVentVals = (x_hatVent(1).*voltageVals +x_hatVent(2))';
 
 syms X; 
 ybestPito(X) = x_hatPito(1)*X +x_hatPito(2);
@@ -199,17 +171,20 @@ figure()
 hold on
 plot(plotVoltage,V_volt)
 fplot(ybestPito,[0 10],"k-","LineWidth",2)
-fplot(ybestPito-sigma_yPito,[0 10],"r-","LineWidth",1)
-fplot(ybestPito+sigma_yPito,[0 10],"r-","LineWidth",1)
+plot(voltageVals,yBestPitoVals-sigmaExtPito(:,2),"r-","LineWidth",1)
+plot(voltageVals,yBestPitoVals+sigmaExtPito(:,2),"r-","LineWidth",1)
 title("Pitostaic Velocity")
+ax = gca;
+ax.FontSize = 16;
+ylim([0,60])
 hold off
 
 figure()
 hold on
 plot(plotVoltage,V2_volt)
 fplot(ybestVent,[0 10],"k-","LineWidth",2)
-fplot(ybestVent-sigma_yVent,[0 10],"r-","LineWidth",1)
-fplot(ybestVent+sigma_yVent,[0 10],"r-","LineWidth",1)
+plot(voltageVals,yBestVentVals-sigmaExtVent(:,2),"r-","LineWidth",1)
+plot(voltageVals,yBestVentVals+sigmaExtVent(:,2),"r-","LineWidth",1)
 title("Venturi Velocity","FontSize",20)
 legend("Best Fit Line","Error Bar","Location","northwest","FontSize",20)
 xlabel("Voltage [V]","FontSize",18)
@@ -224,7 +199,6 @@ hold on
 fplot(ybestVent,[0 10],"LineWidth",2)
 fplot(ybestPito,[0 10],"LineWidth",2)
 fplot(ybestManoPito,[0 10],"LineWidth",2)
-%fplot(ybestManoVent,[0 10],"LineWidth",2)
 title("Different Velocity Measurement Devices","FontSize",20)
 legend("Venturi","Pitostatic","Manometer","Location","northwest","FontSize",20)
 xlabel("Voltage [V]","FontSize",18)
@@ -652,27 +626,140 @@ hold off
 
 %% Functions
 toc
+
+% Calculating error for the automated sensor data
+% Takes in the average data matrix and returns the appropriate least
+% squares lines and error
+function [sigma_yVent,sigma_yPito] = VelocityError(Data,voltage)
+    R = 287; %universal gas constant
+    Sigma_diffP = 0.01* 6.89476 * 10^3; %Systematic Error in differential pressure transducer
+    sigmaAbsP = (250-20)*10^3*0.015; %Systematic error in the absoluted pressure values
+    sigmaT = 0.25; %Systematic error in the temperature data
+    areaRatio = (1/9.5);
+
+    PitoError = zeros(5,20);
+    VentError = zeros(5,20);
+    sigma_yVent = zeros(20,2);
+    sigma_yPito = zeros(20,2);
+    VoltOrder = [1;3;5;7;9;2;4;6;8;10;1.5;3.5;5.5;7.5;9.5;0.5;2.5;4.5;6.5;8.5];
+    sigma_yPito(:,1) = VoltOrder;
+    sigma_yVent(:,1) = VoltOrder;
+    for i = 1:20
+        for j = 1:5
+            T_atm = Data(j,1,i);
+            P_atm = Data(j,2,i);
+            PT1 = Data(j,5,i);
+            PT2 = Data(j,6,i);
+
+            %Computing the Error for the pitostatic probe
+            d_deltaP = ((R*T_atm)/P_atm)*(((2*PT1*R*T_atm)/(P_atm))^(-1/2));
+            d_P= ((-PT1*R*T_atm)/(P_atm^2))*(((2*PT1*R*T_atm)/(P_atm))^(-1/2));
+            d_T = ((PT1*R)/(P_atm))*(((2*PT1*R*T_atm)/(P_atm))^(-1/2));
+            PitoError(j,i) = sqrt((d_deltaP*Sigma_diffP)^2+(d_P*sigmaAbsP)^2+(d_T*sigmaT)^2);
+
+            %Computing the Error for the Venturi tube
+            d_delta_P = ((R*T_atm)/(P_atm*(1-areaRatio^2)))*(((2*PT2*R*T_atm)/(P_atm*(1-areaRatio^2)))^(-1/2));
+            dP = ((-PT2*R*T_atm)/((P_atm*(1-areaRatio^2))^2))*(((2*PT2*R*T_atm)/(P_atm*(1-areaRatio^2)))^(-1/2));
+            dT = ((PT2*R)/(P_atm*(1-areaRatio^2)))*(((2*PT2*R*T_atm)/(P_atm*(1-areaRatio^2)))^(-1/2));
+            VentError(j,i) = sqrt(((d_delta_P * Sigma_diffP)^2) + ((dP * sigmaAbsP)^2) + ((dT * sigmaT)^2));
+        end
+    end
+
+    Indexes = zeros(20,4);
+    Indexes(:,1) = voltage(1,:) == 1;
+    Indexes(:,2) = voltage(1,:) == 2;
+    Indexes(:,3) = voltage(1,:) == 1.5;
+    Indexes(:,4) = voltage(1,:) == 0.5;
+    Indexes = logical(Indexes);
+
+    for i = 1:4
+        PitoData = PitoError(:,Indexes(:,i));
+        VentData = VentError(:,Indexes(:,i));
+        sigma_yPito((i-1)*5+1:i*5,2) = mean(PitoData,2);
+        sigma_yVent((i-1)*5+1:i*5,2) = mean(VentData,2);
+    end
+    sigma_yPito = sortrows(sigma_yPito);
+    sigma_yVent = sortrows(sigma_yVent);
+end
+
+
+function [sigma_yVent,sigma_yPito] = VelocityManometerError(Data,voltage,pitoDiff,VentDiff)
+    R = 287; %universal gas constant
+    sigmaAbsP = (250-20)*10^3*0.015; %Systematic error in the absoluted pressure values
+    sigmaT = 0.25; %Systematic error in the temperature data
+    SigmaPman = 0.05; %Manometer Systematic error
+    areaRatio = (1/9.5);
+
+    PitoError = zeros(5,20);
+    VentError = zeros(5,20);
+    sigma_yVent = zeros(20,2);
+    sigma_yPito = zeros(20,2);
+    VoltOrder = [1;3;5;7;9;2;4;6;8;10;1.5;3.5;5.5;7.5;9.5;0.5;2.5;4.5;6.5;8.5];
+    sigma_yPito(:,1) = VoltOrder;
+    sigma_yVent(:,1) = VoltOrder;
+    for i = 1:20
+        for j = 1:5
+            
+            T_atm = Data(j,1,i);
+            P_atm = Data(j,2,i);
+            rho_atm = Data(j,3,i);
+            volt = Data(j,13,i);
+            diffPPito = pitoDiff(find(pitoDiff(:,1) == volt,1,"first"),2);
+            diffPVent = VentDiff(find(VentDiff(:,1) == volt,1,"first"),2);
+
+            %Computing the Error for the pitostatic probe
+            DeltaP = 0.5 * ((2/rho_atm)^(0.5)) * (diffPPito)^(-1/2);
+            dP = -0.5*((2*diffPPito*R*T_atm)^(0.5))*(P_atm)^(-3/2);
+            dT = 0.5* (((2*diffPPito*R)/P_atm)^0.5) * (T_atm^(-0.5));
+            PitoError(j,i) = sqrt((DeltaP*SigmaPman)^2+(dP*sigmaAbsP)^2+(dT*sigmaT)^2);
+
+            %Computing the Error for the Venturi tube
+            firstPt = (2*R*T_atm) / (P_atm*(1-((areaRatio)^2)));
+            partialDeltP = (firstPt^0.5)*0.5*(diffPVent^(-0.5));
+            
+            firstPt = (2*diffPVent*R*T_atm)/(1-((areaRatio)^2));
+            partialP = (firstPt^0.5)*(-0.5)*(P_atm^(-3/2));
+            
+            firstPt = (2*diffPVent*R)/(P_atm*(1-((areaRatio)^2)));
+            partialT = (firstPt^0.5)*(0.5*(T_atm^(-1/2)));
+            
+            VentError(j,i) = sqrt((partialDeltP*SigmaPman)^2 + (partialT*sigmaT)^2 + (partialP*sigmaAbsP)^2);
+
+
+%             Delta_P = ((2*R*T_atm) / (P_atm*(1-((areaRatio)^2)))^0.5)*0.5*(diffPVent^(-0.5));
+%             d_P = ((2*diffPVent*R*T_atm)/(1-((areaRatio)^2))^0.5)*(-0.5)*(P_atm^(-3/2));
+%             d_T = ((2*diffPVent*R)/(P_atm*(1-((areaRatio)^2)))^0.5)*(0.5*(T_atm^(-1/2)));
+%             VentError(j,i) = sqrt(((Delta_P * SigmaPman)^2) + ((d_P * sigmaAbsP)^2) + ((d_T * sigmaT)^2));
+        end
+    end
+
+    Indexes = zeros(20,4);
+    Indexes(:,1) = voltage(1,:) == 1;
+    Indexes(:,2) = voltage(1,:) == 2;
+    Indexes(:,3) = voltage(1,:) == 1.5;
+    Indexes(:,4) = voltage(1,:) == 0.5;
+    Indexes = logical(Indexes);
+
+    for i = 1:4
+        PitoData = PitoError(:,Indexes(:,i));
+        VentData = VentError(:,Indexes(:,i));
+        sigma_yPito((i-1)*5+1:i*5,2) = mean(PitoData,2);
+        sigma_yVent((i-1)*5+1:i*5,2) = mean(VentData,2);
+    end
+    sigma_yPito = sortrows(sigma_yPito);
+    sigma_yVent = sortrows(sigma_yVent);
+end
+
+
+
 %Least squares estimation of Pitostatic Velocity
-function [x_hat,sigma_y_SSE] = LSR(y,t)
+function [x_hat] = LSR(y,t)
     d = reshape(y,[],1);
     Acol1 = reshape(t,[],1);
     ALength = length(Acol1);
     Acol2 = ones(ALength,1);
     A = [Acol1,Acol2];
+
     %computing the x_hat vector
     x_hat = (A'*A)^(-1)*A'*d;
-    diff_y = d - (x_hat(1)*Acol1 + x_hat(2)); %difference between the actual data and best fit line
-    sigma_y_SSE = sqrt((1/(length(diff_y)-2))*sum(diff_y.^2)); %SSE error from the best fit line
-end
-
-function result = GUPito(Delta_P,T,P)
-    Sigma_diffP = 0.01* 6.89476 * 10^3;
-    sigmaAbsP = (250-20)*10^3*0.015;
-    sigmaT = 0.25;
-    R = 0.287;
-    d_deltaP = (2 .* R .* T./P) .* (Delta_P.*R.*T./P).^(-1/2);
-    d_T = (2.*Delta_P.*R./P) .* (Delta_P.*R.*T./P).^(-1/2);
-    d_P = (-2*Delta_P.^2.*R^2.*T.^2)/(P.^3);
-
-    result = sqrt((d_deltaP*Sigma_diffP)^2+(d_P*sigmaAbsP)^2+(d_T*sigmaT)^2);
 end
