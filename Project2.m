@@ -33,7 +33,7 @@ end
 clear i j
 
 blfiles3 = dir('Exp 2 (airfoil) data files');
-blfiles3 = blfiles3(3:end);
+blfiles3 = blfiles3(2:end);
 names3 = cell(25,1); %to hold the names of each file
 
 Data3 = zeros(240,30,25); %Initialize matrix to store all of the new data
@@ -163,6 +163,7 @@ SigmaPman = 0.05; %Manometer Systematic error
 [sigmaExtVent,sigmaExtPito] = VelocityError(AverageData,plotVoltage);
 yBestPitoVals = (x_hatPito(1).*voltageVals +x_hatPito(2))';
 yBestVentVals = (x_hatVent(1).*voltageVals +x_hatVent(2))';
+yBestManoVentVals = (x_hatManoVent(1).*voltageVals +x_hatManoVent(2))';
 
 syms X; 
 ybestPito(X) = x_hatPito(1)*X +x_hatPito(2);
@@ -171,9 +172,10 @@ figure()
 hold on
 plot(plotVoltage,V_volt)
 fplot(ybestPito,[0 10],"k-","LineWidth",2)
-plot(voltageVals,yBestPitoVals-sigmaExtPito(:,2),"r-","LineWidth",1)
-plot(voltageVals,yBestPitoVals+sigmaExtPito(:,2),"r-","LineWidth",1)
-title("Pitostaic Velocity")
+%plot(voltageVals,yBestPitoVals-sigmaExtPito(:,2),"r-","LineWidth",1)
+%plot(voltageVals,yBestPitoVals+sigmaExtPito(:,2),"r-","LineWidth",1)
+errorbar(voltageVals,yBestPitoVals,sigmaExtPito(:,2));
+title("Pitostatic Velocity")
 ax = gca;
 ax.FontSize = 16;
 ylim([0,60])
@@ -183,10 +185,11 @@ figure()
 hold on
 plot(plotVoltage,V2_volt)
 fplot(ybestVent,[0 10],"k-","LineWidth",2)
-plot(voltageVals,yBestVentVals-sigmaExtVent(:,2),"r-","LineWidth",1)
-plot(voltageVals,yBestVentVals+sigmaExtVent(:,2),"r-","LineWidth",1)
+%plot(voltageVals,yBestVentVals-sigmaExtVent(:,2),"r-","LineWidth",1)
+%plot(voltageVals,yBestVentVals+sigmaExtVent(:,2),"r-","LineWidth",1)
+errorbar(voltageVals,yBestVentVals,sigmaExtVent(:,2));
 title("Venturi Velocity","FontSize",20)
-legend("Best Fit Line","Error Bar","Location","northwest","FontSize",20)
+legend("Best Fit Line","Location","northwest","FontSize",20)
 xlabel("Voltage [V]","FontSize",18)
 ylabel("Velocity [m/s]","FontSize",18)
 ax = gca;
@@ -194,13 +197,17 @@ ax.FontSize = 16;
 ylim([0,60])
 hold off
 
+
 figure()
 hold on
 fplot(ybestVent,[0 10],"LineWidth",2)
 fplot(ybestPito,[0 10],"LineWidth",2)
 fplot(ybestManoPito,[0 10],"LineWidth",2)
+errorbar(voltageVals,yBestVentVals,sigmaExtVent(:,2));
+errorbar(voltageVals,yBestPitoVals,sigmaExtPito(:,2));
+errorbar(voltageVals,yBestManoVentVals,sigma_yVentMano(:,2));
 title("Different Velocity Measurement Devices","FontSize",20)
-legend("Venturi","Pitostatic","Manometer","Location","northwest","FontSize",20)
+legend("Venturi","Pitostatic","Manometer","Venturi Error","PitoStatic Error","Manometer Error","Location","northwest","FontSize",20)
 xlabel("Voltage [V]","FontSize",18)
 ylabel("Velocity [m/s]","FontSize",18)
 ylim([0,60])
